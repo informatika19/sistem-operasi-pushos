@@ -5,6 +5,7 @@ void clear(char *buffer, int length); // Fungsi untuk mengisi buffer dengan 0
 
 int main() {
   char tes[16];
+  interrupt(0x10, 0x0003, 0, 0);
   makeInterrupt21();
   readString(tes);
   // tes[0]='A';
