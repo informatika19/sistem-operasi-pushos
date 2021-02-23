@@ -62,6 +62,3 @@ void clear(char *buffer, int length){
   }
 }
 
-// void readString(char * string) {
-
-// }
