@@ -37,15 +37,12 @@ void printString(char *string) {
   }
 }
 
-void readString(char *string)
-{
+void readString(char *string) {
   int i = 0;
-  while(i < 16)
-  {
+  while(i < 16) {
     *string = interrupt(0x16, 0, 0, 0, 0);
     
-    if (*string != '\r')
-    {
+    if (*string != '\r') {
       string++;
       i++;
     } else {
@@ -61,4 +58,3 @@ void clear(char *buffer, int length){
     buffer[i]=0;
   }
 }
-

@@ -1,2 +1,4 @@
 out/
-bochsout.txt
+*/**/bochsout.txt
+*/**/system.img
+*/**/bootloader
