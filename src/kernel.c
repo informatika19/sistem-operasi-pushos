@@ -3,23 +3,20 @@ void printString(char * string);
 void readString(char * string);
 void clear(char *buffer, int length);
 void printLogo();
-void logo(char * string, int y);
+void lineLogo(char * string, int y);
 
 #define VIDMEM 0xB000
 #define OFFSET 0x8000
 
 int main() {
   char tes[16];
-  interrupt(0x10, 0x0003, 0, 0);
+  interrupt(0x10, 0x0003, 0, 0, 0);
   printLogo();
-  // makeInterrupt21();
-  // readString(tes);
-  // tes[0]='A';
-  // tes[1]='B';
-  // tes[2]='C';
-  // tes[3]='\0';
-  // printString(tes);
-  // clear(tes,16);
+  interrupt(0x10, 0x0200, 0 , 0, 0x0C00);
+  printString("Masukkan input : ");
+  readString(tes);
+  printString(tes);
+  clear(tes,16);
   while (1);
 }
 
@@ -66,20 +63,20 @@ void clear(char *buffer, int length) {
 }
 
 void printLogo() {
-  logo("      `...........`   `...`      ...`   `.....``  `..`     `..`",0);
-  logo("      `...........`   `...`      ...`   `.....``  `..`     `..`",1);
-  logo("      ..............` `....     `.... `.........` ....    `....",2);
-  logo("      .....`````..... `....     `.... ....`  ```  ....    `....",3);
-  logo("      ..--`     `.... `....     ..... .....``     ....``` `....",4);
-  logo("      //ooo+:-...-:////. -:-..     :o/:. `../+oo/.   ..-/+oo+:-",5);
-  logo("      +ooo+//:-:::.`  /oo+:     /ooo/   `-/oooo+``+ooooooooo+//",6);
-  logo("      +ooo:  ``````.  -ooo+`   `/ooo:      .+ooo:`oooo.```-ooo+",7);
-  logo("      +ooo:  -------.  /ooo+:-:+ooo/``/+/:-:+ooo.`ooo+`   -ooo+",8);
-  logo("      /ooo-  +++++:.-. `-+ooooooo+-` `+ooooooo+- `ooo+`   .ooo/",9);
-  logo("      `-:.  .++++++:--.` ``.-:-.`` `` ``.-::-.` ` `--` `.  .--`",10);
+  lineLogo("           `...........`   `...`      ...`   `.....``  `..`     `..`",0);
+  lineLogo("           `...........`   `...`      ...`   `.....``  `..`     `..`",1);
+  lineLogo("           ..............` `....     `.... `.........` ....    `....",2);
+  lineLogo("           .....`````..... `....     `.... ....`  ```  ....    `....",3);
+  lineLogo("           ..--`     `.... `....     ..... .....``     ....``` `....",4);
+  lineLogo("           //ooo+:-...-:////. -:-..     :o/:. `../+oo/.   ..-/+oo+:-",5);
+  lineLogo("           +ooo+//:-:::.`  /oo+:     /ooo/   `-/oooo+``+ooooooooo+//",6);
+  lineLogo("           +ooo:  ``````.  -ooo+`   `/ooo:      .+ooo:`oooo.```-ooo+",7);
+  lineLogo("           +ooo:  -------.  /ooo+:-:+ooo/``/+/:-:+ooo.`ooo+`   -ooo+",8);
+  lineLogo("           /ooo-  +++++:.-. `-+ooooooo+-` `+ooooooo+- `ooo+`   .ooo/",9);
+  lineLogo("           `-:.  .++++++:--.` ``.-:-.`` `` ``.-::-.` ` `--` `.  .--`",10);
 }
                                                                   
-void logo(char * string, int y) {
+void lineLogo(char * string, int y) {
   int j = 0;
   while (string[j] != '\0') {
     putInMemory(VIDMEM, OFFSET + (80 * y + j) * 2, string[j]);
@@ -92,7 +89,7 @@ void logo(char * string, int y) {
       putInMemory(VIDMEM, OFFSET + (80 * y + j) * 2 + 1, 0x9);
       break;
     default:
-      break;
+     putInMemory(VIDMEM, OFFSET + (80 * y + j) * 2 + 1, 0xF);
     }
   }
 }
