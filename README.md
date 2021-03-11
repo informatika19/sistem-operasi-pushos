@@ -18,8 +18,9 @@ Apabila tidak berhasil menggunakan `Makefile`, ganti lah langkah 6 dengan memasu
 * Bruce C Compiler
 * Id86
 * Bochs
-## File Markdown MILESTONE1
-[MILESTONE 1](./MILESTONE1.md)
+## File Markdown
+[MILESTONE 1](docs/MILESTONE1.md)
+[MILESTONE 2](docs/MILESTONE2.md)
 ## Anggota Kelompok PushOS
 * 13519116 Jeane Mikha Erwansyah
 * 13519131 Hera Shafira

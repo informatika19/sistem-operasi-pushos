@@ -1,9 +1,5 @@
-void handleInterrupt21 (int AX, int BX, int CX, int DX);
-void printString(char * string);
-void readString(char * string);
-void clear(char *buffer, int length);
-void printLogo();
-void lineLogo(char * string, int y);
+#include "lib/kernel.h"
+#include "lib/math.h"
 
 #define VIDMEM 0xA000
 #define SCREEN_WIDTH 320
@@ -12,19 +8,21 @@ void lineLogo(char * string, int y);
 #define WHITE 0xF
 
 int main() {
-  char tes[16];
+  char test[16];
   interrupt(0x10, 0x0013, 0, 0, 0);
-  printLogo();
+  printLogoGrafik();
   interrupt(0x15, 0x8600, 0, 5, 0);
   interrupt(0x10, 0x0003, 0, 0, 0x0C00);
-  printString("Masukkan input : ");
-  readString(tes);
-  printString(tes);
-  clear(tes,16);
-  while (1);
+  printLogoASCII();
+  while (1) {
+    printString("Masukkan input : ");
+    readString(test);
+    printString(test);
+    clear(test,16);
+  }
 }
 
-void handleInterrupt21 (int AX, int BX, int CX, int DX){
+void handleInterrupt21 (int AX, int BX, int CX, int DX) {
   switch (AX) {
     case 0x0:
       printString(BX);
@@ -39,7 +37,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX){
 
 void printString(char *string) {
   while (*string != '\0') {
-    interrupt(0x10, 0xE * 256 + *string, 0, 0, 0);
+    interrupt(0x10, 0x0E00 + *string, 0, 0, 0);
     string++;
   }
 }
@@ -66,7 +64,7 @@ void clear(char *buffer, int length) {
   }
 }
 
-void printLogo() {
+void printLogoGrafik() {
   lineLogo("                                                                               ",0);
   lineLogo("                                                                               ",1);
   lineLogo("           `...........`   `...`      ...`   `.....``  `..`     `..`           ",2);
@@ -94,6 +92,13 @@ void printLogo() {
   lineLogo("                                                                               ",24);
   lineLogo("                                                                               ",25);
 }
+
+void printLogoASCII() {
+  printString(" _____ _____ _____ _____    _____ _____ ");
+  printString("|  _  |  |  |   __|  |  |  |     |   __|");
+  printString("|   __|  |  |__   |     |  |  |  |__   |");
+  printString("|__|  |_____|_____|__|__|  |_____|_____|");
+}
                                                                   
 void lineLogo(char * string, int y) {
   int j = 0;
@@ -111,4 +116,12 @@ void lineLogo(char * string, int y) {
      putInMemory(VIDMEM, (SCREEN_WIDTH * y + j), WHITE);
     }
   }
+}
+
+void readSector(char *buffer, int sector) {
+  interrupt(0x13, 0x201, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
+}
+
+void writeSector(char *buffer, int sector) {
+  interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }

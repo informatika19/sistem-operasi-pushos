@@ -1,38 +1,51 @@
 TOOLS=tools
-BOCHS ?= bochs
-kernel_c=src/kernel.c
-kernel_asm=src/kernel.asm
-bootloader_asm=src/bootloader.asm
+BOCHS?=bochs
 
-out=out
+OUT_DIR=out
+ASM_DIR=src/asm
+C_DIR=src/c
+LIB_C_DIR=src/c/lib
 
-sys_img=$(out)/system.img
-bootloader=$(out)/bootloader
-kernel_o=$(out)/kernel.o
-kernel_asm_o=$(out)/kernel_asm.o
-kernel=$(out)/kernel
+KERNEL_C=$(C_DIR)/kernel.c
+KERNEL_OUT=$(OUT_DIR)/kernel.o
+KERNEL=$(OUT_DIR)/kernel
+KERNEL_ASM=$(ASM_DIR)/kernel.asm
+KERNEL_ASM_OUT=$(OUT_DIR)/kernel_asm.o
 
-$(out):
-	mkdir $(out)
+LIB_C = math
+LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
+# LIB_C_ASM=$()/lib.asm
+# LIB_C_ASM_OUT=$(OUT_DIR)/lib_asm.o
 
-$(sys_img): $(out) $(bootloader) $(kernel)
-	dd if=/dev/zero of=$@ bs=512 count=2880
-	dd if=$(bootloader) of=$@ bs=512 conv=notrunc count=1
-	dd if=$(kernel) of=$@ bs=512 conv=notrunc seek=1
+BOOTLOADER=$(OUT_DIR)/bootloader
+BOOTLOADER_ASM=$(ASM_DIR)/bootloader.asm
 
-$(bootloader): $(bootloader_asm)
-	nasm $< -o $@
+SYS_IMG=$(OUT_DIR)/system.img
 
-$(kernel_o): $(kernel_c) $(out)
+$(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 	bcc -ansi -c -o $@ $<
 
-$(kernel_asm_o): $(kernel_asm) $(out)
-	nasm -f as86 $< -o $@ -I $(out)
+$(OUT_DIR):
+	mkdir $(OUT_DIR)
 
-$(kernel): $(kernel_o) $(kernel_asm_o)
+$(SYS_IMG): $(OUT_DIR) $(BOOTLOADER) $(KERNEL)
+	dd if=/dev/zero of=$@ bs=512 count=2880
+	dd if=$(BOOTLOADER) of=$@ bs=512 conv=notrunc count=1
+	dd if=$(KERNEL) of=$@ bs=512 conv=notrunc seek=1
+
+$(BOOTLOADER): $(BOOTLOADER_ASM)
+	nasm $< -o $@
+
+$(KERNEL_OUT): $(KERNEL_C) $(OUT_DIR)
+	bcc -ansi -c -o $@ $<
+
+$(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR)
+	nasm -f as86 $< -o $@ -I $(OUT_DIR)
+
+$(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(KERNEL_ASM_OUT)
 	ld86 -o $@ -d $^
 
-build: $(sys_img)
+build: $(SYS_IMG)
 
 run: build
 	$(BOCHS) -f if2230.config
