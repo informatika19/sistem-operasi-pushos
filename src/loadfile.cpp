@@ -11,6 +11,32 @@
 
 using namespace std;
 
+// W I P - - - C O M I N G - - - S O O N
+void validateInput(string inputFileName)
+{
+    /* Open the file */
+    // Check size
+    // 512 map, 1024 files, 512 sectors
+    // if (filesystem::file_size(inputFileName) > 16 * SECTOR_SIZE)
+    // {
+    //     throw "File too large";
+    // }
+
+    /* Input validation */
+    // Parse and validate input
+    // if (inputFileName.length() > 14)
+    // {
+    //     throw "File name too long";
+    // }
+
+    // Check directory
+    
+
+    // Check map
+
+    // Find area in map large enough for file
+}
+
 int main(int argc, char** argv)
 {
     /*
@@ -26,28 +52,3 @@ int main(int argc, char** argv)
 
 }
 
-// W I P - - - C O M I N G - - - S O O N
-void validateInput(string inputFileName)
-{
-    /* Open the file */
-    // Check size
-    // 512 map, 1024 files, 512 sectors
-    if (filesystem::file_size(inputFileName) > 16 * SECTOR_SIZE)
-    {
-        throw "File too large";
-    }
-
-    /* Input validation */
-    // Parse and validate input
-    if (inputFileName.length() > 14)
-    {
-        throw "File name too long";
-    }
-
-    // Check directory
-    
-
-    // Check map
-
-    // Find area in map large enough for file
-}

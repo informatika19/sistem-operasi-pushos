@@ -5,6 +5,7 @@
 #include <fstream>
 #include <filesystem>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 
@@ -63,7 +64,9 @@ class DiskImage {
             fstream inputFile;
             inputFile.open(inputFileName);
 
+            inputFile.seekg(0, inputFile.end);
             streamsize inputSize = inputFile.tellg();
+            inputFile.seekg(0, inputFile.beg);
             char* buffer = new char[inputSize];
             
             inputFile.read(buffer, inputSize);
@@ -77,7 +80,10 @@ class DiskImage {
     private:
         void validateInputFile(char* inputFileName)
         {
-            if (filesystem::file_size(inputFileName) > 16 * SECTOR_SIZE)
+            fstream inputFile;
+            inputFile.open(inputFileName);
+            inputFile.seekg(0, inputFile.end);
+            if (inputFile.tellg() > 16 * SECTOR_SIZE)
             {
                 throw "File too large";
             }
