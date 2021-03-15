@@ -24,7 +24,7 @@
 #define WHITE 0xF
 
 int main() {
-  char buffer[SECTOR_SIZE * SECTOR_ENTRY_LENGTH];
+  char buffer[SECTOR_SIZE * 2];
   char test[16];
   interrupt(0x10, 0x0013, 0, 0, 0);
   // drawImage();
@@ -315,11 +315,11 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   clear(dirBuffer[FILE_ENTRY_LENGTH * entry], FILE_ENTRY_LENGTH);
 
   // Menyimpan parentIndex
-  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = parentIdx;
+  dirBuffer[FILE_ENTRY_LENGTH * entry] = parentIdx;
 
   // Menyimpan flag S
   if (isFile != 1) {
-    dirBuffer[FILE_ENTRY_LENGTH * entry + 2] = 0xFF;
+    dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = 0xFF;
     return;
   }
 
@@ -330,7 +330,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
     return;
   }
   
-  dirBuffer[FILE_ENTRY_LENGTH * entry + 2] = indexS;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = indexS;
 
   // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
   if (fNameLen < FILE_NAME_LENGTH) {
