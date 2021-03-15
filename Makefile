@@ -1,26 +1,32 @@
 TOOLS=tools
 BOCHS?=bochs
 
+SRC=src
 OUT_DIR=out
-ASM_DIR=src/asm
-C_DIR=src/c
-LIB_C_DIR=src/c/lib
+ASM_DIR=$(SRC)/asm
+C_DIR=$(SRC)/c
+LIB_C_DIR=$(SRC)/c/lib
+# BOOT_LOGO_DIR=$(SRC)/other
+
+KSIZE=50
 
 KERNEL_C=$(C_DIR)/kernel.c
 KERNEL_OUT=$(OUT_DIR)/kernel.o
 KERNEL=$(OUT_DIR)/kernel
 KERNEL_ASM=$(ASM_DIR)/kernel.asm
 KERNEL_ASM_OUT=$(OUT_DIR)/kernel_asm.o
+# BOOT_LOGO_OUT=$(OUT_DIR)/logo.bin
 
-LIB_C = math
+LIB_C=math string
 LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
-# LIB_C_ASM=$()/lib.asm
-# LIB_C_ASM_OUT=$(OUT_DIR)/lib_asm.o
 
 BOOTLOADER=$(OUT_DIR)/bootloader
 BOOTLOADER_ASM=$(ASM_DIR)/bootloader.asm
 
 SYS_IMG=$(OUT_DIR)/system.img
+MAP_IMG=$(OUT_DIR)/map.img
+SECTORS_IMG=$(OUT_DIR)/sectors.img
+FILES_IMG=$(OUT_DIR)/files.img
 
 $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 	bcc -ansi -c -o $@ $<
@@ -28,10 +34,26 @@ $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 $(OUT_DIR):
 	mkdir $(OUT_DIR)
 
-$(SYS_IMG): $(OUT_DIR) $(BOOTLOADER) $(KERNEL)
+# $(BOOT_LOGO_OUT): $(BOOT_LOGO_DIR)/logo.png
+# 	python3 $(BOOT_LOGO_DIR)/image2bin.py $< $@
+
+$(MAP_IMG):
+	dd if=/dev/zero of=$@ bs=512 count=1
+	python3 -c 'print("\xFF"*$(KSIZE))' | dd of=$@ bs=512 count=$(KSIZE) conv=notrunc
+
+$(FILES_IMG):
+	dd if=/dev/zero of=$@ bs=512 count=2
+
+$(SECTORS_IMG):
+	dd if=/dev/zero of=$@ bs=512 count=1
+
+$(SYS_IMG): $(OUT_DIR) $(BOOTLOADER) $(KERNEL) $(MAP_IMG) $(SECTORS_IMG) $(FILES_IMG)
 	dd if=/dev/zero of=$@ bs=512 count=2880
 	dd if=$(BOOTLOADER) of=$@ bs=512 conv=notrunc count=1
 	dd if=$(KERNEL) of=$@ bs=512 conv=notrunc seek=1
+	dd if=$(MAP_IMG) of=$@ bs=512 count=1 seek=256
+	dd if=$(FILES_IMG) of=$@ bs=512 count=2 seek=257
+	dd if=$(SECTORS_IMG) of=$@ bs=512 count=1 seek=259
 
 $(BOOTLOADER): $(BOOTLOADER_ASM)
 	nasm $< -o $@
@@ -39,7 +61,7 @@ $(BOOTLOADER): $(BOOTLOADER_ASM)
 $(KERNEL_OUT): $(KERNEL_C) $(OUT_DIR)
 	bcc -ansi -c -o $@ $<
 
-$(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR)
+$(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR) # $(BOOT_LOGO_OUT)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
 $(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(KERNEL_ASM_OUT)

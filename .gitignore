@@ -1,2 +1,6 @@
 out/
 bochsout.txt
+**/*/__pycache__
+**/*/other
+TODO.md
+temp.txt
