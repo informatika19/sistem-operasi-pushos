@@ -4,7 +4,6 @@
 void handleInterrupt21(int AX, int BX, int CX, int DX);
 void printString(char *string);
 void readString(char *string);
-void newLine(int *row);
 void clear(char *buffer, int length);
 void printLogoASCII();
 void printLogoGrafik();
@@ -13,6 +12,9 @@ void readSector(char *buffer, int sector);
 void writeSector(char *buffer, int sector);
 void readFile(char *buffer, char *path, int *result, char parentIndex);
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
-char *findFileName(char *path);
+char *findFName(char *path, int *isFile);
+int getMapEmptySectorCount(char *mapBuffer);
+int getSectorsEmptyEntry(char *secBuffer);
+int isPathValid(char *path);
 
 #endif
