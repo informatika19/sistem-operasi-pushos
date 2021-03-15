@@ -180,7 +180,7 @@ int isPathValid(char *path, char parentIndex){
   }
 }
 
-char getFileIdx(char *name, char parentIndex,char *files){
+int getFileIdx(char *name, char parentIndex,char *files){
   int found=0;
   int idx = 0;
   while (found==0){
@@ -191,6 +191,7 @@ char getFileIdx(char *name, char parentIndex,char *files){
       idx++;
     }
   }
+  return -1;
 }
 
 int strlen(char* s) {
@@ -203,8 +204,8 @@ int getFileIdxFromPath(char *path, char parentIndex, char *files, char *sectors)
   if(path[0]=='.' && path[1]=='.' && parentIndex==0xFF){
     return -1;
   }
-  else{ //path diawali '/' atau './'
-    //studi kasus ./hera/downloads/bacot.txt
+  else{ //path diawali '/' atau './' atau '../'
+    //studi kasus ./hera/downloads/bacot.txt 
     int i=0;
     char currentIndex;
     int pathLength = strlen(path);
@@ -212,23 +213,26 @@ int getFileIdxFromPath(char *path, char parentIndex, char *files, char *sectors)
       if(path[i]=='/'){
         i++;
         int j=0;
-        char *folderName;
+        char *fileName;
         while((path[i]!='/' && path[i]!='\0' && i<pathLength){
-          folderName[j] = path[i];
+          fileName[j] = path[i];
           i++;
           j++;
         }
-        currentIndex = getFileIdx(folderName,parentIndex,files);
-        if(files[16*currentIndex]==parentIndex){
+        currentIndex = getFileIdx(fileName,parentIndex,files);
+        if(currentIndex != -1){
           parentIndex = currentIndex;
+          if(i==pathLength-1){
+            return currentIndex;
+          }
         }
         else{
           return -1;
         }
       }
-    }
-    else{
-      i++;
+      else{
+        i++;
+      }
     }
   }
 }
@@ -238,63 +242,76 @@ void readFile(char *buffer, char *path, int *result, char parentIndex){
   char sectors[512];
   char fileName[14];
 
-  // get file name from path
-  int length = 0;
-  while (path[length]!='\0'){
-    length++;
-  }
-  int i = length-1;
-  int j = 0;
-  while(path[i]!='/' && i>=0){
-    fileName[j]=path[i];
-    i--;
-    j++;
-  }
-  //reverse
-  int lengthFileName = j;
-  char fileName2[lengthFileName];
-  for(int i=0;i<lengthFileName;i++){
-    fileName2[i]=fileName[j-1];
-    j=j-1;
-  }
-  fileName2[lengthFileName]='\0';
-  // end get file name from path
+  // // get file name from path
+  // int length = 0;
+  // while (path[length]!='\0'){
+  //   length++;
+  // }
+  // int i = length-1;
+  // int j = 0;
+  // while(path[i]!='/' && i>=0){
+  //   fileName[j]=path[i];
+  //   i--;
+  //   j++;
+  // }
+  // //reverse
+  // int lengthFileName = j;
+  // char fileName2[lengthFileName];
+  // for(int i=0;i<lengthFileName;i++){
+  //   fileName2[i]=fileName[j-1];
+  //   j=j-1;
+  // }
+  // fileName2[lengthFileName]='\0';
+  // // end get file name from path
 
   readSector(files, 0x101);
 	readSector(files + 512, 0x102);
 	readSector(sectors, 0x103);
 
-  int found=0;
-  int idx = 0;
-  while (found==0){
-    if (strcmp(fileName2,files[idx*16+2]) == 0 && files[idx*16] == parentIndex){
-      found = 1;
-    }
-    else{
-      idx++;
-    }
-  }
-
-  if(found==1){
-
-    int noSector = 0;
-    int idxSec = files[16*idx + 1];
-    while(){
-
-    }
-    // // readSector(buffer + (idx * 512), sectors[idxsector]);
-    // for(nosector=0;nosector<15;nosector++){
-    //   int secPos = secidx*16+nosector;
-		// if (sectors[secPos] == 0) {
-		// 	break;
-		// }
-		// readSector(buffer + (nosector * 512), sectors[secPos]);
-
-    }
-  }
-
-  else if(found==0 && idx==32){
-    *result = -1;
+  char fileIdx = getFileIdxFromPath(path,parentIndex,files,sectors);
+  if (fileIdx==-1){
+    result = -1
     printf("File tidak ditemukan");
   }
+  else{
+    int noSector = 0;
+    int idxSec = files[16*fileIdx+1];
+    while(sectors[idxSec+noSector]!=0){
+      readSector(buffer + (nosector * 512), sectors[idxSec+noSector]);
+    }
+  }
+
+  // int found=0;
+  // int idx = 0;
+  // while (found==0){
+  //   if (strcmp(fileName2,files[idx*16+2]) == 0 && files[idx*16] == parentIndex){
+  //     found = 1;
+  //   }
+  //   else{
+  //     idx++;
+  //   }
+  // }
+
+  // if(found==1){
+
+  //   int noSector = 0;
+  //   int idxSec = files[16*idx + 1];
+  //   while(){
+
+  //   }
+  //   // // readSector(buffer + (idx * 512), sectors[idxsector]);
+  //   // for(nosector=0;nosector<15;nosector++){
+  //   //   int secPos = secidx*16+nosector;
+	// 	// if (sectors[secPos] == 0) {
+	// 	// 	break;
+	// 	// }
+	// 	// readSector(buffer + (nosector * 512), sectors[secPos]);
+
+  //   }
+  // }
+
+  // else if(found==0 && idx==32){
+  //   *result = -1;
+  //   printf("File tidak ditemukan");
+  // }
 }
