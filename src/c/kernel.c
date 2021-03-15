@@ -346,7 +346,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
     mapBuffer[secIndex] = 0xFF;
 
     secBuffer[indexS * SECTOR_ENTRY_LENGTH + i] = secIndex;
-    writeSector(buffer+(SECTOR_SIZE * i), secIndex);
+    writeSector(buffer+(i * SECTOR_SIZE), secIndex);
   }
 
   writeSector(mapBuffer, MAP_SECTOR);
