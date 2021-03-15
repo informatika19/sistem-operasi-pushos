@@ -2,16 +2,22 @@
 #include "lib/math.h"
 #include "lib/string.h"
 
-#define FILE_NAME_LENGTH 14
-#define FILE_ENTRY_LENGTH 16
-#define FILE_ENTRY_TOTAL 64
-#define SECTOR_SIZE 512
+#define FILE_NAME_LENGTH    14
+#define FILE_ENTRY_LENGTH   16
+#define FILE_ENTRY_TOTAL    64
+
+#define SECTOR_SIZE         512
 #define SECTOR_ENTRY_LENGTH 16
-#define SECTOR_FILE_TOTAL 32
-#define SECTOR_TOTAL 2880
-#define MAP_SECTOR 0x100
-#define ROOT_SECTOR 0x101
-#define SECTORS_SECTOR 0x103
+#define SECTOR_FILE_TOTAL   32
+#define SECTOR_TOTAL        2880
+
+#define MAP_SECTOR          0x100
+#define ROOT_SECTOR         0x101
+#define SECTORS_SECTOR      0x103
+
+#define ADDR_MAP            MAP_SECTOR * SECTOR_SIZE
+#define ADDR_FILES          ROOT_SECTOR * SECTOR_SIZE
+#define ADDR_SECTORS        SECTORS_SECTOR * SECTOR_SIZE
 
 #define BLUE 0x9
 #define YELLOW 0xE
@@ -166,6 +172,76 @@ void writeSector(char *buffer, int sector) {
   interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
+char *parsePath(char *path, char parentIndex) {
+  // path paling banyak 64 ganti dir
+  char pathDir[FILE_ENTRY_TOTAL * FILE_NAME_LENGTH];
+  int i, j, k;
+  i = 0;
+  k = 0;
+  while (path[i] != '\0') {
+    j = 0;
+
+    if (path[i] != '/') {
+      while (path[i] != '/') {
+        i++;
+        j++;
+      }
+
+      if (j > FILE_NAME_LENGTH) {
+        printString("Path tidak valid!\r\n");
+        return -1;
+      }
+
+      strncpy(pathDir[k * FILE_ENTRY_LENGTH + 2], path[j], j);
+      k++;
+    } else {
+      i++;
+    }
+  }
+
+  return pathDir;
+}
+
+int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
+  char dir[FILE_ENTRY_TOTAL * FILE_NAME_LENGTH];
+  char name[FILE_NAME_LENGTH];
+  char currentParent;
+  int index;
+  int i;
+  strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH); // bruh
+  currentParent = parentIndex;
+  for (i = 0; i < FILE_ENTRY_TOTAL && dir[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
+    clear(name, FILE_NAME_LENGTH);
+    if (strncmp(dir[i * FILE_ENTRY_LENGTH], "..", 2) == 0) {
+      if (currentParent == 0xFF) {
+        return 0;
+      } else {
+        currentParent = dirBuffer[currentParent * FILE_ENTRY_LENGTH];
+        continue;
+      }
+    } else if (dir[i] == '.') {
+      continue;
+    }
+    // kalo turun itu compare nama dan parent
+    strncpy(name, dir[i + 2], FILE_NAME_LENGTH);
+    index = getFileIdx(name, currentParent, dirBuffer);
+    currentParent = dirBuffer[index * FILE_ENTRY_LENGTH];
+  }
+
+  *parentIndex = currentParent;
+  return 1;
+}
+
+int getFileIdx(char *name, char parentIndex, char *dirBuffer) {
+  int idx = 0;
+  while (idx < FILE_ENTRY_TOTAL) {
+    if (strncmp(name, dirBuffer[idx * FILE_ENTRY_LENGTH + 2], strlen(name)) == 0
+      && dirBuffer[idx * FILE_ENTRY_LENGTH] == parentIndex) return idx;
+    idx++;
+  }
+  return -1;
+}
+
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
 
 }
@@ -183,6 +259,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   char mapBuffer[SECTOR_SIZE];
   char dirBuffer[SECTOR_SIZE*2];
   char secBuffer[SECTOR_SIZE];
+  char parentIdx[1];
   char fName[FILE_NAME_LENGTH];
   char subBuff[SECTOR_SIZE];
   char sectorPointer[SECTOR_ENTRY_LENGTH];
@@ -193,14 +270,9 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
   readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
 
-  if ((dirBuffer[(FILE_ENTRY_LENGTH * parentIndex) + 1] != 0xFF) && (parentIndex != 0xFF)) {
-    // printString("Folder tidak valid");
-    *sectors = -4;
-    return;
-  }
-
   // Mem-validasi path
-  if (isPathValid(path)) {
+  strncpy(parentIdx, parentIndex, 1);
+  if (isPathValid(path, parentIdx, dirBuffer) == -1) {
     // printString("Path tidak valid");
     *sectors = -4;
     return;
@@ -211,7 +283,8 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
   // Mengecek apakah file sudah ada atau belum
   for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-    if (parentIndex == dirBuffer[FILE_ENTRY_LENGTH * entry] && (strncmp(fName, dirBuffer[FILE_ENTRY_LENGTH * entry + 2], FILE_NAME_LENGTH) == 0)) {
+    if (parentIdx == dirBuffer[FILE_ENTRY_LENGTH * entry]
+      && (strncmp(fName, dirBuffer[FILE_ENTRY_LENGTH * entry + 2], FILE_NAME_LENGTH) == 0)) {
       // printString("File dengan nama yang sama sudah ada");
       *sectors = -1;
       return;
@@ -220,7 +293,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
   // Mengecek ketersediaan entry
   for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-    if (dirBuffer[FILE_ENTRY_LENGTH * entry] == 0x00) {
+    if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
       break;
     }
   }
@@ -242,7 +315,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   clear(dirBuffer[FILE_ENTRY_LENGTH * entry], FILE_ENTRY_LENGTH);
 
   // Menyimpan parentIndex
-  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = parentIndex;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = parentIdx;
 
   // Menyimpan flag S
   if (isFile != 1) {
@@ -262,9 +335,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
   if (fNameLen < FILE_NAME_LENGTH) {
     strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
-    for (i = fNameLen; i < FILE_NAME_LENGTH; i++) {
-      dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + i] = 0x00;
-    }
+    // dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
   }
 
   // Menulis sector
@@ -286,19 +357,23 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
 char *findFName(char *path, int *isFile) {
   int pathLen;
+  int i;
+  int j;
+  char fName[FILE_NAME_LENGTH];
+
   pathLen = strlen(path);
   *isFile = 0;
 
-  int i = pathLen - 1;
-  int j = 0;
+  i = pathLen - 1;
+  j = 0;
   while (path[i] != '/' && i >= 0) {
     if (path[i] == '.') { *isFile = 1; }
     i--;
     j++;
   }
 
-  char fName[j];
-  return strncpy(fName, path[i], j);
+  strncpy(fName, path[i], j);
+  return fName;
 }
 
 int getMapEmptySectorCount(char *mapBuffer) {
