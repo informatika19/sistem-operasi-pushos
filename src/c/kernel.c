@@ -422,6 +422,11 @@ char *findFName(char *path, int *isFile) {
   return fName;
 }
 
+char *getFileFromIdx(char idx, char *files) {
+  return files[idx*SECTOR_ENTRY_LENGTH+2];
+}
+
+
 int getMapEmptySectorCount(char *mapBuffer) {
   int i, count;
   count = 0;
@@ -467,9 +472,32 @@ void shell_cd(char** currentDir, char* params)
   }
 };
 
-void shell_ls(char** currentDir, char* params)
+void shell_ls(char* currentDir, char* params)
 {
+  char mapBuffer[SECTOR_SIZE];
+  char dirBuffer[SECTOR_SIZE*2];
+  char secBuffer[SECTOR_SIZE];
+  int finalDir;
+  int idx;
+  int isFile;
 
+
+  readSector(mapBuffer, MAP_SECTOR);
+  readSector(dirBuffer, ROOT_SECTOR);
+  readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
+
+  if(isPathValid(params, currentDir, dirBuffer)==1){
+    finalDir = findFName(params,isFile);
+  }
+  finalDir = currentDir;
+  
+  for(idx=0;idx<SECTOR_FILE_TOTAL;idx++){
+    if(dirBuffer[idx*SECTOR_SIZE]==finalDir){
+      printString(getFileFromIdx(idx, dirBuffer));
+      printString("\r\n");
+    }
+  }
 };
 
 void shell_cat(char** currentDir, char* params)
