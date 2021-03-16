@@ -435,3 +435,106 @@ int getSectorsEmptyEntry(char *secBuffer) {
       return i;
   return -1;
 }
+
+char* tokenizeCommand(char* raw, int* commandLen)
+{
+  char* temp;
+
+  int i = 0;
+
+  while(*raw != 0x00 && *raw != ' ')
+  {
+    temp[i] == *raw;
+    raw++;
+    i++;
+  }
+
+  temp[i] = 0x00;
+
+  *commandLen = i;
+  return temp;
+}
+
+void shell_cd(char** currentDir, char* params)
+{
+  if(strcmp(params, "..") == 0)
+  {
+
+  } else {
+    strcat(*currentDir, params);
+  }
+};
+
+void shell_ls(char** currentDir, char* params)
+{
+
+};
+
+void shell_cat(char** currentDir, char* params)
+{
+
+};
+
+void shell_ln(char** currentDir, char* params)
+{
+
+};
+
+/*
+Command list
+  cd <dir>
+    change directory
+
+  ls
+    list directory
+
+  cat <file>
+    print contents of file
+
+  ln <file> <second_filename>
+    hardlink (create second name for file)
+*/
+
+#define shell_isCmd(cmd) (strcmp(command, cmd)==0)
+
+void shell()
+{
+  char* rawcommand;
+  char* command;
+  char* params;
+  char* currAbsDir;
+
+  int cmlen;
+
+  while (1)
+  {
+    printString(currAbsDir);
+    printString(">");
+    readString(rawcommand);
+
+    command = tokenizeCommand(rawcommand, &cmlen);
+    params = rawcommand+cmlen;
+
+    if (shell_isCmd("cd"))
+    {
+      // change directory
+      shell_cd(&currAbsDir, params);        
+    } else if (shell_isCmd("ls"))
+    {
+      // list directory
+      shell_ls(&currAbsDir, params);
+    } else if (shell_isCmd("cat"))
+    {
+      // cat
+      shell_cat(&currAbsDir, params);
+    } else if (shell_isCmd("ln"))
+    {
+      // ln
+      shell_ln(&currAbsDir, params);
+    } else {
+      printString("Invalid command");
+    }
+  }
+}
+
+
