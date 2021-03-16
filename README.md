@@ -3,13 +3,16 @@
 ```sh
 $ make run
 ```
+Tested on ubuntu.
 ## Dependensi
 * Netwide Assembler
 * Bruce C Compiler
 * Ld86
 * Bochs
 * GNU Make
-* GCC
+* GCC/G++
+* Python 3
+
 ## File Markdown
 * [MILESTONE 1](docs/MILESTONE1.md)
 * [MILESTONE 2](docs/MILESTONE2.md)

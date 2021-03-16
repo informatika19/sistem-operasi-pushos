@@ -39,7 +39,7 @@ $(OUT_DIR):
 
 $(MAP_IMG):
 	dd if=/dev/zero of=$@ bs=512 count=1
-	python3 -c 'print("\xFF"*$(KSIZE))' | dd of=$@ bs=512 count=$(KSIZE) conv=notrunc
+	python3 -c "import sys; sys.stdout.buffer.write(b'\xFF'*$(KSIZE))" | dd of=$@ bs=512 count=$(KSIZE) conv=notrunc
 
 $(FILES_IMG):
 	dd if=/dev/zero of=$@ bs=512 count=2
@@ -67,7 +67,10 @@ $(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR) # $(BOOT_LOGO_OUT)
 $(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(KERNEL_ASM_OUT)
 	ld86 -o $@ -d $^
 
-build: $(SYS_IMG)
+$(LANG):
+	LANG=en-us.UTF-8
+
+build: $(LANG) $(SYS_IMG)
 
 run: build
 	$(BOCHS) -f if2230.config

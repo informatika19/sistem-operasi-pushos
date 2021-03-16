@@ -4,6 +4,7 @@
 2. Buka terminal dan buka binary file dengan dua tambahan argumen: lokasi `system.img` dan lokasi file yang ingin dimasukkan.
 
 ```sh
-S <nama binary> <path system.img> <path file yang ingin dimasukkan>
+S g++ -o loadfile loadfile.cpp
+$ ./loadfile ../../../out/system.img <file yang ingin dimasukkan>
 ```
 ___
