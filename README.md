@@ -9,6 +9,7 @@ $ make run
 * Ld86
 * Bochs
 * GNU Make
+* GCC
 ## File Markdown
 * [MILESTONE 1](docs/MILESTONE1.md)
 * [MILESTONE 2](docs/MILESTONE2.md)
