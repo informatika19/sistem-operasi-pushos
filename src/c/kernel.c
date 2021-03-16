@@ -38,7 +38,9 @@ int main() {
   printString("\r\nOutput: ");
   printString(test);
   printString("\r\n");
-  // newline(*row);
+
+  strncpy(buffer, test, 16);
+  writeFile(buffer, "./test.txt", 1, 0xFF);
   clear(test,16);
 
   while (1);
