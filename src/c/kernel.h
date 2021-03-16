@@ -19,10 +19,10 @@ char* findFName(char *path, int *isFile);
 int getMapEmptySectorCount(char *mapBuffer);
 int getSectorsEmptyEntry(char *secBuffer);
 
-char* tokenizeCommand(char* raw, int* commandLen);
-void shell_cd(char** currentDir, char* params);
-void shell_ls(char** currentDir, char* params);
-void shell_cat(char** currentDir, char* params);
+void tokenizeCommand(char* raw, char* command, char* param);
+void shell_cd(char** currentDir, char* params, char* dirBuffer);
+void shell_ls(char** currentDir, char* params, char* dirBuffer);
+void shell_cat(char** currentDir, char* params, char* dirBuffer);
 void shell_ln(char** currentDir, char* params);
 
 #endif

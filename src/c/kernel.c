@@ -542,7 +542,7 @@ void shell_ls(char** currentDir, char* params, char* dirBuffer) {
       }
     }
   }
-};
+}
 
 void shell_cat(char** currentDir, char* params, char* dirBuffer) {
   char *parentIdx;
@@ -558,11 +558,11 @@ void shell_cat(char** currentDir, char* params, char* dirBuffer) {
   } else {
     printString("File tidak ditemukan\r\n");
   }
-};
+}
 
 void shell_ln(char** currentDir, char* params) {
   
-};
+}
 
 /*
 Command list
@@ -579,7 +579,7 @@ Command list
     hardlink (create second name for file)
 */
 
-#define shell_isCmd(cmd, cmlen) (strncmp(command, cmd, cmlen) == 0)
+#define shell_isCmd(cmd) (strncmp(command, cmd) == 0;)
 
 void shell() {
   char* rawcommand;
