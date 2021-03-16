@@ -476,7 +476,7 @@ void shell_cd(char** currentDir, char* params)
 
   if(strcmp(params, "..") == 0)
   {
-    //naik 1
+    
   } else {
     strcat(*currentDir, params);
 
@@ -499,7 +499,7 @@ void shell_ls(char** currentDir, char* params)
   readSector(dirBuffer, ROOT_SECTOR);
   readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
   readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
-  
+
   if(isPathValid(params, parentIdx, dirBuffer)==1){
 
     for(idx=0;idx<SECTOR_FILE_TOTAL;idx++){
