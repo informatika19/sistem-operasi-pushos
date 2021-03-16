@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <sstream>
 #include <vector>
+#include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -71,9 +73,9 @@ class DiskImage {
             
             inputFile.read(buffer, inputSize);
 
-            writeSector(mapIdx, buffer, inputSize);
             addToDirectory(dirIdx, mapIdx, inputFileName);
-
+            writeSector(mapIdx, buffer, inputSize);
+            
             delete[] buffer;
         }
 
@@ -134,13 +136,18 @@ class DiskImage {
         int findMap(int begin, int end)
         {
             int i = begin;
+            map.seekg(ADDR_MAP);
             bool found = false;
             char* buffer = new char[16];
             while (i < end && !found)
             {
+                map.seekg(ADDR_MAP + i * 16);
                 map.get(buffer, 16);
                 found = (buffer[0] == 0x00);
-                if (!found) i++;
+                if (!found)
+                {
+                    i++;
+                };
             }
 
             if (i >= end)
@@ -148,7 +155,7 @@ class DiskImage {
                 throw "No space available";
             }
 
-            map.seekg(ADDR_FILES);
+            map.seekg(ADDR_MAP);
             delete[] buffer;
             return i;
         }
@@ -159,6 +166,30 @@ class DiskImage {
             sectors.seekp(ADDR_SECTORS + sectorIdx * 16 * SECTOR_SIZE);
             sectors.write(buffer, size);
             sectors.seekp(ADDR_SECTORS);
+
+            char* mark;
+            mark[0] == 0xFF;
+
+            char* freemark;
+            freemark[0] == 0x00;
+
+            map.seekp(ADDR_MAP + sectorIdx * 16);
+            cout << "Starting to write on map at address " << hex << ADDR_MAP + sectorIdx * 16 << endl;
+
+            map.put(0xFF);
+            // for(int i = 0; i < 16; i++)
+            // {
+            //     // if (i > floor(size / SECTOR_SIZE))
+            //     // {
+            //     //     map.write(freemark, 1);
+            //     // } else {
+            //     //     map.write(mark, 1);
+            //     // }
+                
+            //     cout << "HUHI" << endl;
+            // }
+
+            cout << "Writing sector index " << sectorIdx << " at address " << hex << ADDR_SECTORS + sectorIdx * 16 * SECTOR_SIZE << endl;
         }
 
         void addToDirectory(int parentIdx, int sectorIdx, char* fileName)
@@ -166,18 +197,32 @@ class DiskImage {
             int dirIdx = findAvailableDirectorySlot(0, RANGE_FILES);
             files.seekp(ADDR_FILES + dirIdx * 16);
             
-            char* buffer;
+            char* buffer = new char[16];
             buffer[0] = parentIdx;
             buffer[1] = sectorIdx;
 
             int i = 2;
-            while(*fileName != 0x00 && i < 15)
+            int k = 0;
+            while(fileName[k] != 0x00 && i < 15)
             {
-                buffer[i] = *fileName;
-                fileName++;
+                buffer[i] = fileName[k];
+                i++;
+                k++;
             }
 
             buffer[i] = 0x00;
+
+            cout << "Writing to directory index " << dirIdx << " at address " << hex << ADDR_FILES + dirIdx * 16 << " with contents "; 
+            for(int j = 0; j < i; j++)
+            {
+                cout << buffer[j];
+            }
+
+            cout << " pointing to sector " << hex << sectorIdx << endl;
+            files.write(buffer, i);
+            files.seekp(ADDR_FILES);
+
+            delete[] buffer;
         }
 
         // Find something in sector, return idx
