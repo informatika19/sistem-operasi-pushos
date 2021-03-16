@@ -464,7 +464,7 @@ void shell_cd(char** currentDir, char* params)
 {
   if(strcmp(params, "..") == 0)
   {
-
+    
   } else {
     strcat(*currentDir, params);
   }
