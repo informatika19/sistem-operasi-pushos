@@ -208,8 +208,10 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
   char currentParent;
   int index;
   int i;
-  strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH); // bruh
+
+  strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH);
   currentParent = parentIndex;
+
   for (i = 0; i < FILE_ENTRY_TOTAL && dir[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
     clear(name, FILE_NAME_LENGTH);
     if (strncmp(dir[i * FILE_ENTRY_LENGTH], "..", 2) == 0) {
@@ -222,7 +224,7 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
     } else if (dir[i] == '.') {
       continue;
     }
-    // kalo turun itu compare nama dan parent
+
     strncpy(name, dir[i + 2], FILE_NAME_LENGTH);
     index = getFileIdx(name, currentParent, dirBuffer);
     currentParent = dirBuffer[index * FILE_ENTRY_LENGTH];
@@ -243,7 +245,49 @@ int getFileIdx(char *name, char parentIndex, char *dirBuffer) {
 }
 
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
+  char mapBuffer[SECTOR_SIZE];
+  char dirBuffer[SECTOR_SIZE*2];
+  char secBuffer[SECTOR_SIZE];
+  char parentIdx[1];
+  char fName[FILE_NAME_LENGTH];
+  char fileIdx;
+  int noSector;
+  int idxSec;
+  int isFile, fNameLen;
 
+  // baca sektor
+  readSector(mapBuffer, MAP_SECTOR);
+  readSector(dirBuffer, ROOT_SECTOR);
+  readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
+
+  // cek apakah namanya sesuai
+  strcpy(fName, findFName(path, isFile));
+  fNameLen = strlen(fName);
+  if (isFile != 1) {
+    // printString("Bukan file\r\n");
+    *result = -1;
+    return;
+  }
+
+  strncpy(parentIdx, parentIndex, 1);
+  if (isPathValid(path, parentIdx, dirBuffer) == -1) {
+    // printString("Path tidak valid");
+    // printString("File tidak ditemukan\r\n");
+    *result = -1;
+    return;
+  }
+
+  fileIdx = getFileIdx(fName, parentIdx, dirBuffer);
+  idxSec = dirBuffer[SECTOR_ENTRY_LENGTH * fileIdx + 1];
+  noSector = 0;
+
+  while (secBuffer[SECTOR_ENTRY_LENGTH * idxSec + noSector] != 0) {
+    readSector(buffer + (noSector * SECTOR_SIZE), secBuffer[SECTOR_ENTRY_LENGTH * idxSec + noSector]);
+    noSector++;
+  }
+
+  *result = 1;
 }
 
 /**
@@ -255,7 +299,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
  * - harus <= 16 
  */
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
-  int i, j, entry, fNameLen, sectorsWritten, isFile, indexS, secIndex;
+  int i, j, entry, fNameLen, isFile, indexS, secIndex;
   char mapBuffer[SECTOR_SIZE];
   char dirBuffer[SECTOR_SIZE*2];
   char secBuffer[SECTOR_SIZE];
