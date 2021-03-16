@@ -42,6 +42,7 @@ int main() {
 
   strncpy(buffer, test, 16);
   writeFile(test, "user", 1, 0xFF);
+  writeFile(buffer, "./test.txt", 1, 0xFF);
   clear(test,16);
   readFile(test, "test.txt", &res, 0xFF);
   printString(test);
@@ -192,13 +193,12 @@ char *parsePath(char *path, char parentIndex) {
         j++;
       }
 
-      if (j-1 > FILE_NAME_LENGTH) {
+      if (j > FILE_NAME_LENGTH) {
         printString("Path tidak valid!\r\n");
-        pathDir[0] = -1;
-        return pathDir;
+        return -1;
       }
 
-      strncpy(pathDir[k * FILE_ENTRY_LENGTH + 2], path[i], j);
+      strncpy(pathDir[k * FILE_ENTRY_LENGTH + 2], path[j], j);
       k++;
     } else {
       i++;
@@ -216,12 +216,11 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
   int i;
 
   strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH);
-  if (dir[0] == -1) { return 0; }
   currentParent = parentIndex;
 
   for (i = 0; i < FILE_ENTRY_TOTAL && dir[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
     clear(name, FILE_NAME_LENGTH);
-    if (strncmp(dir[i * FILE_ENTRY_LENGTH + 2], "..", 2) == 0) {
+    if (strncmp(dir[i * FILE_ENTRY_LENGTH], "..", 2) == 0) {
       if (currentParent == 0xFF) {
         return 0;
       } else {
@@ -232,9 +231,8 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
       continue;
     }
 
-    strncpy(name, dir[i * FILE_ENTRY_LENGTH + 2], FILE_NAME_LENGTH);
+    strncpy(name, dir[i + 2], FILE_NAME_LENGTH);
     index = getFileIdx(name, currentParent, dirBuffer);
-    if (index == -1) { return 0; }
     currentParent = dirBuffer[index * FILE_ENTRY_LENGTH];
   }
 
@@ -259,6 +257,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
   char *parentIdx;
   char fName[FILE_NAME_LENGTH];
   char fileIdx;
+  char parentIdx;
   int noSector;
   int idxSec;
   int *isFile, fNameLen;
@@ -428,6 +427,11 @@ char *findFName(char *path, int *isFile) {
   return fName;
 }
 
+char *getFileFromIdx(char idx, char *files) {
+  return files[idx*SECTOR_ENTRY_LENGTH+2];
+}
+
+
 int getMapEmptySectorCount(char *mapBuffer) {
   int i, count;
   count = 0;
@@ -462,16 +466,50 @@ char* tokenizeCommand(char* raw, int* commandLen) {
 }
 
 void shell_cd(char** currentDir, char* params) {
-  if(strcmp(params, "..") == 0) {
+  char mapBuffer[SECTOR_SIZE];
+  char dirBuffer[SECTOR_SIZE*2];
+  char secBuffer[SECTOR_SIZE];
+
+  readSector(mapBuffer, MAP_SECTOR);
+  readSector(dirBuffer, ROOT_SECTOR);
+  readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
+
+  if (strcmp(params, "..") == 0) {
     
   } else {
     strcat(*currentDir, params);
+
   }
 }
 
 void shell_ls(char** currentDir, char* params) {
+  char mapBuffer[SECTOR_SIZE];
+  char dirBuffer[SECTOR_SIZE*2];
+  char secBuffer[SECTOR_SIZE];
+  char *finalName;
+  char *parentIdx;
+  int idx;
+  int isFile;
 
-}
+  strncpy(parentIdx, *currentDir, 14);
+
+  readSector(mapBuffer, MAP_SECTOR);
+  readSector(dirBuffer, ROOT_SECTOR);
+  readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
+
+  if (isPathValid(params, parentIdx, dirBuffer) == 1) {
+
+    for(idx=0;idx<SECTOR_FILE_TOTAL;idx++){
+      if(dirBuffer[idx*SECTOR_SIZE]==parentIdx){
+        printString(getFileFromIdx(idx, dirBuffer));
+        printString("\r\n");
+      }
+    }
+
+  }
+};
 
 void shell_cat(char** currentDir, char* params) {
 
@@ -496,7 +534,7 @@ Command list
     hardlink (create second name for file)
 */
 
-#define shell_isCmd(cmd, cmlen) (strncmp(command, cmd, commandLen) == 0)
+#define shell_isCmd(cmd, cmlen) (strncmp(command, cmd, cmlen) == 0)
 
 void shell() {
   char* rawcommand;
