@@ -7,6 +7,8 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 using namespace std;
 
@@ -92,6 +94,15 @@ class DiskImage {
             delete[] buffer;
         }
 
+        void addFolder(string folderName, string targetPath)
+        {
+            // validateInputFile(inputFolderName);
+            int dirIdx = findDirectory(targetPath);
+            // int mapIdx = findMap(0, RANGE_MAP);
+
+            addFolderToDirectory(dirIdx, folderName);
+        }
+
     private:
         void validateInputFile(char* inputFileName)
         {
@@ -100,7 +111,8 @@ class DiskImage {
             inputFile.seekg(0, inputFile.end);
             if (inputFile.tellg() > 16 * SECTOR_SIZE)
             {
-                throw 103;
+                cout << "ERROR" << 103;
+                exit(EXIT_FAILURE);
             }
 
             string s(inputFileName);
@@ -115,7 +127,8 @@ class DiskImage {
 
             if (s.length() > 14)
             {
-                throw 118;
+                cout << "ERROR" << 118;
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -147,9 +160,36 @@ class DiskImage {
 
         bool folderWithParent(string folderName, int parentIdx, char* rowData)
         {
-            bool isChild = (rowData[0] == parentIdx);
-            bool isFolder = (rowData[1] == 0xFF);
-            bool correctFolderName = (folderName.compare(2, 14, rowData));
+            bool isChild = ((unsigned char)rowData[0] == parentIdx);
+            bool isFolder = ((unsigned char)rowData[1] >= 0xFF);
+
+            // cout << hex << parentIdx << " " << hex << rowData[0] << endl;
+
+            // for(int i = 0; i < 16; i++)
+            // {
+            //     cout << hex << (int) rowData[i];
+            //     cout << " ";
+            // }
+            // cout << endl;
+
+            // cout << "COMPARING " << folderName << endl;
+            // cout << "TO ";
+
+            // rowData += 2;
+            // cout << rowData+2;
+
+            // for (int i = 0; i < 13; i++)
+            // {
+            //     cout << rowData;
+            // }
+
+            // string dirName(rowData);
+            // cout << dirName;
+            // cout << rowData;
+            // cout << endl;
+            // cout << "EVALUATION " << isChild << " " << isFolder << " " << (folderName.compare(rowData+2) == 0) << endl;
+
+            bool correctFolderName = (folderName.compare(rowData+2) == 0);
 
             return (isChild && isFolder && correctFolderName);
         };
@@ -176,7 +216,8 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw 179;
+                cout << "ERROR" << 179;
+                exit(EXIT_FAILURE);
             }
 
             map.seekg(ADDR_MAP);
@@ -219,7 +260,8 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw 222;
+                cout << "ERROR" << 222;
+                exit(EXIT_FAILURE);
             }
 
             sectors.seekg(ADDR_SECTORS);
@@ -266,7 +308,6 @@ class DiskImage {
                 }
                 
             }
-
         }
 
         void addToDirectory(int parentIdx, int sectorIdx, char* fileName)
@@ -312,22 +353,66 @@ class DiskImage {
             delete[] buffer;
         }
 
+        void addFolderToDirectory(int parentIdx, string fileName)
+        {
+            int dirIdx = findAvailableDirectorySlot(0, RANGE_FILES);
+            files.seekp(ADDR_FILES + dirIdx * 16);
+            
+            char* buffer = new char[16];
+            buffer[0] = parentIdx;
+            buffer[1] = 0xFF;
+
+            int i = 2;
+            int k = 0;
+
+            string s(fileName);
+            string delimit = "/";
+            
+            size_t pos=0;
+
+            while ((pos = s.find(delimit)) != string::npos)
+            {
+                s.erase(0, pos + 1);
+            }
+
+            for (k = 0; k < s.length() && k < 13; k++)
+            {
+                buffer[i] = s[k];
+                i++;
+            }
+
+            buffer[i] = 0x00;
+
+            cout << "Writing to directory index " << dirIdx << " at address " << hex << ADDR_FILES + dirIdx * 16 << " with contents "; 
+            for(int j = 0; j < i; j++)
+            {
+                cout << buffer[j];
+            }
+
+            // cout << " pointing to sector table row " << hex << sectorIdx << endl;
+            files.write(buffer, i);
+            files.seekp(ADDR_FILES);
+
+            delete[] buffer;
+        }
+
         // Find something in sector, return idx
         int findFileInSector (int begin, int end, string folderName, int parentIdx) //  bool (*query)(char*)
         {
             int i = begin;
             bool found = false;
-            char* buffer = new char[16];
+            char* buffer = new char[17];
             while (i < end && !found)
             {
-                files.get(buffer, 16);
+                files.get(buffer, 17);
                 found = folderWithParent(folderName, parentIdx, buffer);
                 if (!found) i++;
             }
 
             if (i >= end)
             {
-                throw 320;
+                cout << "ERROR" << 320;
+                exit(EXIT_FAILURE);
             }
 
             files.seekg(ADDR_FILES);
@@ -350,7 +435,8 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw 343;
+                cout << "ERROR" << 343;
+                exit(EXIT_FAILURE);
             }
 
             files.seekg(ADDR_FILES);
