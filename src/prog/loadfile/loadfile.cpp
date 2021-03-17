@@ -34,12 +34,8 @@ int main(int argc, char** argv)
     validateInput(INPUT_NAME);
     if (argc == 3) // loadfile <system.img> <file>
     {
-        try {
-            system.addFile(INPUT_NAME, "");
-        } catch (int err)
-        {
-            cout << "ERROR AT LINE" << err << endl;
-        }
+        cout << "HE" << endl;
+        system.addFile(INPUT_NAME, "");
     } else if (argc == 5)
     {
         system.addFolder(FOLDER_NAME, FOLDER_PATH);

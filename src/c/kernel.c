@@ -508,44 +508,34 @@ void shell_cd(char* absPath, char* params, char* dirBuffer) {
   }
 }
 
-void shell_ls(char* absPath, char* params, char* dirBuffer) {
-  // params <= 1: path
-  int *isFile;
-  char path[MAX_PATH_LENGTH];
-  // char temp[MAX_CD * FILE_NAME_LENGTH];
-  char fName[FILE_NAME_LENGTH];
-  int pathLen;
-  int idx;
-  char *parentIdx;
+void shell_ls(char currentDir, char* params){
+  int i;
+  char dir[2*512];
+  char parentIdx = currentDir;
 
-  *parentIdx = 0xFF;
-  pathLen = strlen(params);
+ // readSector
+  handleInterrupt21(0x0002, dir, 0x101, 0); 
+  handleInterrupt21(0x0002, dir+512, 0x102, 0);
 
-  if (pathLen == 0) {
-    if (strlen(absPath) != 1) {
-      if (isPathValid(absPath, &parentIdx, dirBuffer) == 1) { /* nop */ }
-      for (idx = 0; idx < MAX_CD; idx++) {
-        if (dirBuffer[idx * FILE_ENTRY_LENGTH] == parentIdx) {
-          clear(fName, FILE_NAME_LENGTH);
-          strncpy(fName, dirBuffer[idx*FILE_ENTRY_LENGTH+2], FILE_NAME_LENGTH);
-          printString(fName);
-          printString("\r\n");
-        }
-      }
-    }
-  } else {
-    strncpy(path, params, pathLen);
-    if (isPathValid(absPath, &parentIdx, dirBuffer) == 1) { /* nop */ }
-    if (isPathValid(path, &parentIdx, dirBuffer) == 0) { return; }
-    for (idx = 0; idx < MAX_CD; idx++) {
-      if (dirBuffer[idx * FILE_ENTRY_LENGTH] == parentIdx) {
-        clear(fName, FILE_NAME_LENGTH);
-        strncpy(fName, dirBuffer[idx*FILE_ENTRY_LENGTH+2], FILE_NAME_LENGTH);
-        printString(fName);
+  if(params[0]=='\0'){
+    for(i=0;i<32;i++){
+      if(dir[16*i]==parentIdx){ 
         printString("\r\n");
+        printString(dir+16*i+2);
       }
     }
   }
+  else if(isPathValid(params,parentIdx,dir)){
+    if(params[0]=='\0'){
+      for(i=0;i<32;i++){
+        if(dir[16*i]==parentIdx){ 
+          printString("\r\n");
+          printString(dir+16*i+2);
+        }
+      }
+    }
+  }
+  printString("\r\n");
 }
 
 void shell_cat(char* currentDir, char* params, char* dirBuffer) {

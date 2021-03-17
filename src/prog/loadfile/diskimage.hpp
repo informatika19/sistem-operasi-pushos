@@ -75,7 +75,6 @@ class DiskImage {
         
             validateInputFile(inputFileName);
             int dirIdx = findDirectory(targetPath);
-            // int mapIdx = findMap(0, RANGE_MAP);
             int secIdx = findSector(0, RANGE_SECTORS);
             
             fstream inputFile;
@@ -89,7 +88,9 @@ class DiskImage {
             inputFile.read(buffer, inputSize);
 
             addToDirectory(dirIdx, secIdx, inputFileName);
+            // cout << "TEST 1" << endl;
             writeSector(secIdx, buffer, inputSize);
+            // cout << "TEST 2" << endl;
             
             delete[] buffer;
         }
@@ -162,32 +163,6 @@ class DiskImage {
         {
             bool isChild = ((unsigned char)rowData[0] == parentIdx);
             bool isFolder = ((unsigned char)rowData[1] >= 0xFF);
-
-            // cout << hex << parentIdx << " " << hex << rowData[0] << endl;
-
-            // for(int i = 0; i < 16; i++)
-            // {
-            //     cout << hex << (int) rowData[i];
-            //     cout << " ";
-            // }
-            // cout << endl;
-
-            // cout << "COMPARING " << folderName << endl;
-            // cout << "TO ";
-
-            // rowData += 2;
-            // cout << rowData+2;
-
-            // for (int i = 0; i < 13; i++)
-            // {
-            //     cout << rowData;
-            // }
-
-            // string dirName(rowData);
-            // cout << dirName;
-            // cout << rowData;
-            // cout << endl;
-            // cout << "EVALUATION " << isChild << " " << isFolder << " " << (folderName.compare(rowData+2) == 0) << endl;
 
             bool correctFolderName = (folderName.compare(rowData+2) == 0);
 
@@ -322,20 +297,21 @@ class DiskImage {
             int i = 2;
             int k = 0;
 
-            char* filename_nopath = fileName;
-            char* tkn = strtok(fileName, "/");
+            // cout << "TEST 3 " << endl;
+            string s(fileName);
+            string delimit = "/";
+            
+            size_t pos=0;
 
-            while (tkn != NULL)
+            while ((pos = s.find(delimit)) != string::npos)
             {
-                tkn = strtok(NULL, "/");
-                filename_nopath = tkn;
+                s.erase(0, pos + 1);
             }
 
-            while(filename_nopath[k] != 0x00 && i < 15)
+            for (k = 0; k < s.length() && k < 13; k++)
             {
-                buffer[i] = filename_nopath[k];
+                buffer[i] = s[k];
                 i++;
-                k++;
             }
 
             buffer[i] = 0x00;
