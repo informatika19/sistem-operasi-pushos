@@ -448,6 +448,15 @@ int getIdxOfFileWithNameAndParent(char* name, int parentIdx)
   return -1;
 }
 
+int getNameOfFileWithIdx(int idX, char* name)
+{
+  char dirBuffer[SECTOR_SIZE*2];
+  readSector(dirBuffer, ROOT_SECTOR);
+  strcpy(name, dirBuffer[FILE_ENTRY_LENGTH * idX + 2], FILE_NAME_LENGTH);
+
+  return strlen(name);
+}
+
 char* getFileFromIdx(char idx, char *files) {
   char fName[FILE_ENTRY_LENGTH];
   strncpy(fName, files[idx * FILE_ENTRY_LENGTH + 2], FILE_NAME_LENGTH);
@@ -480,6 +489,33 @@ void tokenizeCommand(char* raw, char* command, char* param) {
 
   while (raw[i] != '\0') {
     if (raw[i] == ' ') {
+      haveParam = 1;
+      i++;
+    } else if (haveParam == 0) {
+      command[j] = raw[i];
+      j++;
+      i++;
+    } else {
+      param[k] = raw[i];
+      k++;
+      i++;
+    }
+  }
+
+  command[j] = '\0';
+  param[k] = '\0';
+}
+
+void tokenizeCommandDelim(char* raw, char* command, char* param, char delim) {
+  int i, j, k;
+  int haveParam;
+  i = 0;
+  j = 0;
+  k = 0;
+  haveParam = 0;
+
+  while (raw[i] != '\0') {
+    if (raw[i] == delim) {
       haveParam = 1;
       i++;
     } else if (haveParam == 0) {
@@ -559,21 +595,50 @@ int getParentIndexFromAbsPath(char* absPath, int currentParent)
 //   return temp;
 // }
 
-void shell_cd(char* absPath, char* params, char* dirBuffer, char* currentParentIdx) {
+void shell_cd(char* absPath, char* params, char* dirBuffer, char* currentParentIdx, char* currentPathAsIdx) {
   // params == 0: path tujuan
-  char newPath[MAX_PATH_LENGTH];
-  char *fName;
-  char *parentIdx;
-  int *isFile;
-  int newPathLen;
 
-
-  newPathLen = strlen(params);
-  *parentIdx = 0xFF;
+  char* target;
+  char* remainder;
+  char* temp;
 
   getParentIndexFromAbsPath(absPath, currentParentIdx);
   currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
   absPath = strcat(absPath, params);
+  currentPathAsIdx[1] = currentParentIdx;
+
+  // tokenizeCommandDelim(params, target, remainder, "/");
+
+  // printString(target);
+
+  // while(strcmp(target, "") > 0)
+  // {
+  //   if (strcmp(target, ".."))
+  //   {
+  //     (*absPathNeff)--;
+  //     strncpy(absPath, absPath, strlen(absPath)-getNameOfFileWithIdx(currentParentIdx, temp));
+  //     currentParentIdx = absPathAsIdx[*absPathNeff-1];
+  //   } else {
+  //     getParentIndexFromAbsPath(absPath, currentParentIdx);
+  //     currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
+  //     absPath = strcat(absPath, params);
+  //     absPathAsIdx[*absPathNeff] = currentParentIdx; 
+  //     (*absPathNeff)++;
+  //   }
+  // }
+
+  // if (strcmp(target, ".."))
+  // {
+  //   (*absPathNeff)--;
+  //   strncpy(absPath, absPath, strlen(absPath)-getNameOfFileWithIdx(currentParentIdx, temp));
+  //   currentParentIdx = absPathAsIdx[*absPathNeff-1];
+  // } else {
+
+  // absPathAsIdx[absPathNeff] = currentParentIdx; 
+  // absPathNeff += 1;
+  // }
+
+
 
   // if (newPathLen != 0) {
   //   if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
@@ -700,7 +765,9 @@ void shell() {
 
   char absPathAsIdx[32];
   int absPathNEff = 1;
+  char* temp;
   absPathAsIdx[0] = 0xFF;
+  
   
 
   currAbsDir = "/";
@@ -719,6 +786,8 @@ void shell() {
 
     tokenizeCommand(rawcommand, command, params);
 
+    currParentIdx = absPathAsIdx[absPathNEff-1];
+
     // printString("\r\n");
     // printString("--");
     // printString(params);
@@ -726,13 +795,17 @@ void shell() {
     // printString("\r\n");
 
     if (strncmp(command, "cd", 2) == 0) { // change directory
-      shell_cd(currAbsDir, params, dirBuffer, currParentIdx);
+      shell_cd(currAbsDir, params, dirBuffer, currParentIdx, absPathAsIdx);
     } else if (strncmp(command, "ls", 2) == 0) { // list directory
       shell_ls(currParentIdx, params);
     } else if (strncmp(command, "cat", 3) == 0) { // cat
       shell_cat(currAbsDir, params, dirBuffer);
     } else if (strncmp(command, "ln", 2) == 0) { // ln
       shell_ln(currParentIdx, params);
+    }  else if (strncmp(command, "curdir", 6) == 0)
+    {
+      getNameOfFileWithIdx(currParentIdx, temp);
+      printString(temp);
     } else {
       printString("Invalid command");
     }
