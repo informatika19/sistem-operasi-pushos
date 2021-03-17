@@ -559,7 +559,7 @@ int getParentIndexFromAbsPath(char* absPath, int currentParent)
 //   return temp;
 // }
 
-void shell_cd(char** absPath, char* params, char* dirBuffer, char** currentParentIdx) {
+void shell_cd(char* absPath, char* params, char* dirBuffer, char* currentParentIdx) {
   // params == 0: path tujuan
   char newPath[MAX_PATH_LENGTH];
   char *fName;
@@ -571,9 +571,9 @@ void shell_cd(char** absPath, char* params, char* dirBuffer, char** currentParen
   newPathLen = strlen(params);
   *parentIdx = 0xFF;
 
-  getParentIndexFromAbsPath(*absPath, *currentParentIdx);
-  *currentParentIdx = getIdxOfFileWithNameAndParent(params, *currentParentIdx);
-  *absPath = strcat(*absPath, params);
+  getParentIndexFromAbsPath(absPath, currentParentIdx);
+  currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
+  absPath = strcat(absPath, params);
 
   // if (newPathLen != 0) {
   //   if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
@@ -726,7 +726,7 @@ void shell() {
     // printString("\r\n");
 
     if (strncmp(command, "cd", 2) == 0) { // change directory
-      shell_cd(&currAbsDir, params, dirBuffer, &currParentIdx);
+      shell_cd(currAbsDir, params, dirBuffer, currParentIdx);
     } else if (strncmp(command, "ls", 2) == 0) { // list directory
       shell_ls(currParentIdx, params);
     } else if (strncmp(command, "cat", 3) == 0) { // cat
