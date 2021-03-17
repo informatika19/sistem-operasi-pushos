@@ -178,9 +178,9 @@ void writeSector(char *buffer, int sector) {
   interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
-char *parsePath(char *path, char parentIndex) {
+void parsePath(char *path, char parentIndex, char *parsedPath[]) {
   // path paling banyak 64 ganti dir
-  char pathDir[FILE_ENTRY_TOTAL * FILE_NAME_LENGTH];
+  // char pathDir[FILE_ENTRY_TOTAL * FILE_NAME_LENGTH];
   int i, j, k;
   i = 0;
   k = 0;
@@ -195,18 +195,17 @@ char *parsePath(char *path, char parentIndex) {
 
       if (j-1 > FILE_NAME_LENGTH) {
         printString("Path tidak valid!\r\n");
-        pathDir[0] = -1;
-        return pathDir;
+        *parsedPath[0] = -1;
+        return;
       }
 
-      strncpy(pathDir[k * FILE_ENTRY_LENGTH + 2], path[i], j);
+      strncpy(*parsedPath[k * FILE_ENTRY_LENGTH + 2], path[i], j);
       k++;
     } else {
       i++;
     }
   }
 
-  return pathDir;
 }
 
 int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
@@ -216,7 +215,8 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
   int index;
   int i;
 
-  strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH);
+  parsePath(path, parentIndex, &dir);
+  // strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH);
   if (dir[0] == -1) { return 0; }
   currentParent = parentIndex;
 
