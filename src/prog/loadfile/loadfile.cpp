@@ -30,7 +30,13 @@ int main(int argc, char** argv)
     validateInput(INPUT_NAME);
     if (argc == 3)
     {
-        system.addFile(INPUT_NAME, "");
+        try {
+            system.addFile(INPUT_NAME, "");
+        } catch (int err)
+        {
+            cout << "ERROR AT LINE" << err << endl;
+        }
+        
     } else {
         system.addFile(INPUT_NAME, DIRECTORY_NAME);
     }

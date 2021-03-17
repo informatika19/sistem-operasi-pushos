@@ -100,13 +100,22 @@ class DiskImage {
             inputFile.seekg(0, inputFile.end);
             if (inputFile.tellg() > 16 * SECTOR_SIZE)
             {
-                throw "File too large";
+                throw 103;
             }
 
             string s(inputFileName);
+            string delimit = "/";
+            
+            size_t pos=0;
+
+            while ((pos = s.find(delimit)) != string::npos)
+            {
+                s.erase(0, pos + 1);
+            }
+
             if (s.length() > 14)
             {
-                throw "File name too long";
+                throw 118;
             }
         }
 
@@ -167,7 +176,7 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw "No space available";
+                throw 179;
             }
 
             map.seekg(ADDR_MAP);
@@ -210,7 +219,7 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw "No space for new file entry available";
+                throw 222;
             }
 
             sectors.seekg(ADDR_SECTORS);
@@ -271,9 +280,19 @@ class DiskImage {
 
             int i = 2;
             int k = 0;
-            while(fileName[k] != 0x00 && i < 15)
+
+            char* filename_nopath = fileName;
+            char* tkn = strtok(fileName, "/");
+
+            while (tkn != NULL)
             {
-                buffer[i] = fileName[k];
+                tkn = strtok(NULL, "/");
+                filename_nopath = tkn;
+            }
+
+            while(filename_nopath[k] != 0x00 && i < 15)
+            {
+                buffer[i] = filename_nopath[k];
                 i++;
                 k++;
             }
@@ -308,7 +327,7 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw "Directory not found";
+                throw 320;
             }
 
             files.seekg(ADDR_FILES);
@@ -331,7 +350,7 @@ class DiskImage {
 
             if (i >= end)
             {
-                throw "No directory space available";
+                throw 343;
             }
 
             files.seekg(ADDR_FILES);
