@@ -595,17 +595,24 @@ int getParentIndexFromAbsPath(char* absPath, int currentParent)
 //   return temp;
 // }
 
-void shell_cd(char* absPath, char* params, char* dirBuffer, char* currentParentIdx, char* currentPathAsIdx) {
+void shell_cd(int pathDepth, char* absPath, char* params, char* dirBuffer, char* currentParentIdx, char* currentPathAsIdx) {
   // params == 0: path tujuan
 
   char* target;
   char* remainder;
   char* temp;
 
-  getParentIndexFromAbsPath(absPath, currentParentIdx);
-  currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
-  absPath = strcat(absPath, params);
-  currentPathAsIdx[1] = currentParentIdx;
+  if (strcmp(params, "..") == 0)
+  {
+    printString("RETURN\r\n");
+    currentParentIdx = currentPathAsIdx[pathDepth-2];
+  } else {
+    getParentIndexFromAbsPath(absPath, currentParentIdx);
+    currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
+    absPath = strcat(absPath, "/");
+    absPath = strcat(absPath, params);
+    currentPathAsIdx[pathDepth] = currentParentIdx;
+  }
 
   // tokenizeCommandDelim(params, target, remainder, "/");
 
@@ -769,8 +776,8 @@ void shell() {
   absPathAsIdx[0] = 0xFF;
   
   
-
-  currAbsDir = "/";
+  currAbsDir = "";
+  // currAbsDir = "/";
   currParentIdx = 0xFF;
 
   while (1) {
@@ -795,7 +802,14 @@ void shell() {
     // printString("\r\n");
 
     if (strncmp(command, "cd", 2) == 0) { // change directory
-      shell_cd(currAbsDir, params, dirBuffer, currParentIdx, absPathAsIdx);
+      shell_cd(absPathNEff, currAbsDir, params, dirBuffer, currParentIdx, absPathAsIdx, absPathNEff);
+
+      if (strcmp(params, "..") == 0)
+      {
+        absPathNEff--;
+      } else {
+        absPathNEff++;
+      }
     } else if (strncmp(command, "ls", 2) == 0) { // list directory
       shell_ls(currParentIdx, params);
     } else if (strncmp(command, "cat", 3) == 0) { // cat
@@ -807,7 +821,7 @@ void shell() {
       getNameOfFileWithIdx(currParentIdx, temp);
       printString(temp);
     } else {
-      printString("Invalid command");
+      // printString("Invalid command");
     }
     printString("\r\n");
   }
