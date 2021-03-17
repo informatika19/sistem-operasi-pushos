@@ -294,6 +294,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
  * -3 tidak cukup sector kosong,
  * -4 folder tidak valid
  */
+
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   int i, j, entry, fNameLen, isFile, flagS, secsNeeded, secIndex;
   char mapBuffer[SECTOR_SIZE];
@@ -420,6 +421,38 @@ void findFName(char *path, int *isFile, char *fName) {
   strncpy(&fName, path[i], j);
 }
 
+int getIdxOfFileWithNameAndParent(char* name, int parentIdx)
+{
+  int found = -1;
+  int i = 0;
+  char dirBuffer[SECTOR_SIZE*2];
+  int entry;
+  char* fName;
+  strcpy(fName, name);
+  readSector(dirBuffer, ROOT_SECTOR);
+
+    // Mengecek apakah file sudah ada atau belum
+  for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
+    if (parentIdx == dirBuffer[FILE_ENTRY_LENGTH * entry]
+      && (strncmp(fName, dirBuffer[FILE_ENTRY_LENGTH * entry + 2], FILE_NAME_LENGTH) == 0)) {
+      return entry;
+    }
+  }
+
+  // while (found == -1)
+  // {
+  //   if (dirBuffer[i*FILE_ENTRY_LENGTH] == parentIdx)
+  //   {
+  //     if (strcmp(name, dirBuffer[i*FILE_ENTRY_LENGTH+2], 14) == 0)
+  //     {
+  //       return dirBuffer[i*FILE_ENTRY_LENGTH+1];
+  //     }
+  //   }
+  // }
+
+  return -1;
+}
+
 char* getFileFromIdx(char idx, char *files) {
   char fName[FILE_ENTRY_LENGTH];
   strncpy(fName, files[idx * FILE_ENTRY_LENGTH + 2], FILE_NAME_LENGTH);
@@ -469,6 +502,51 @@ void tokenizeCommand(char* raw, char* command, char* param) {
   param[k] = '\0';
 }
 
+// int createDelimitedArray(char* params, char* array[], char delim, int size)
+// {
+//   // int i = 0;
+//   // int k = 0;
+//   // char* temp;
+//   // while (params[i] != '\0' && k < size) {
+//   //   if (params[i] != delim) {
+//   //     temp = strcat(temp, params[i], 1);
+//   //   } else {
+//   //     // printString(array[k]);
+//   //     // strcpy(array[k], temp);
+//   //     // strcpy(temp, "");
+//   //     k++;
+//   //   }
+//   //   i++;
+//   // }
+//   // return k;
+// }
+
+int getParentIndexFromAbsPath(char* absPath, int currentParent)
+{
+  int lastDelim = 0;
+  int i = 0;
+  char* temp;
+  int j = 0;
+
+  for(i = 0; i < strlen(absPath); i++)
+  {
+    if (absPath[i] == '/')
+    {
+      lastDelim = i;
+    };
+  };
+
+  
+  while(j < 13 && absPath+lastDelim+j != 0x00)
+  {
+    temp[j] = absPath+lastDelim+j;
+    j++;
+  }
+  temp[j] = 0x00;
+
+  return getIdxOfFileWithNameAndParent(temp, currentParent);
+}
+
 // char* tokenizeCommand(char* raw, int* commandLen) {
 //   char* temp;
 
@@ -486,7 +564,7 @@ void tokenizeCommand(char* raw, char* command, char* param) {
 //   return temp;
 // }
 
-void shell_cd(char* absPath, char* params, char* dirBuffer) {
+void shell_cd(char** absPath, char* params, char* dirBuffer, char** currentParentIdx) {
   // params == 0: path tujuan
   char newPath[MAX_PATH_LENGTH];
   char *fName;
@@ -494,23 +572,28 @@ void shell_cd(char* absPath, char* params, char* dirBuffer) {
   int *isFile;
   int newPathLen;
 
+
   newPathLen = strlen(params);
   *parentIdx = 0xFF;
 
-  if (newPathLen != 0) {
-    if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
-      return;
-    }
-    findFName(params, &isFile, &fName);
-    if (*isFile != 1) {
-      realPath(absPath, params, &newPath);
-      strcpy(&absPath, newPath);
-    } else {
-      printString("Bukan berupa direktori\r\n");
-    }    
-  } else {
-    printString("Input tidak valid\r\n");
-  }
+  getParentIndexFromAbsPath(*absPath, *currentParentIdx);
+  *currentParentIdx = getIdxOfFileWithNameAndParent(params, *currentParentIdx);
+  *absPath = strcat(*absPath, params);
+
+  // if (newPathLen != 0) {
+  //   if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
+  //     return;
+  //   }
+  //   fName = findFName(params, &isFile);
+  //   if (*isFile != 1) {
+  //     realPath(absPath, params, &newPath);
+  //     strcpy(&absPath, newPath);
+  //   } else {
+  //     printString("Bukan berupa direktori\r\n");
+  //   }    
+  // } else {
+  //   printString("Input tidak valid\r\n");
+  // }
 }
 
 void shell_ls(char currentDir, char* params) {
@@ -558,8 +641,38 @@ void shell_cat(char* currentDir, char* params, char* dirBuffer) {
   }
 }
 
-void shell_ln(char* currentDir, char* params) {
-  
+void shell_ln(int currentDirIdx, char* params) {
+  int entry, indexS;
+  char dirBuffer[SECTOR_SIZE*2];
+  char *paramArray[2];
+
+  // int numParams = createDelimitedArray(params, paramArray, ' ', 2);
+  int i;
+  // for(i = 0; i < numParams; i++)
+  // {
+  //   printString(paramArray[i]);
+  // };
+
+  printString("OK");
+
+  // readSector(dirBuffer, ROOT_SECTOR);
+
+  // for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
+  //   if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
+  //     break;
+  //   }
+  // }
+
+  // dirBuffer[FILE_ENTRY_LENGTH * entry + 0] = parent;
+
+  // Menyimpan flag S
+  // dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = sector;
+
+  // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
+  // if (fNameLen < FILE_NAME_LENGTH-1) {
+  //   strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
+    // dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
+  // }
 }
 
 /*
@@ -588,6 +701,11 @@ void shell() {
   char secBuffer[SECTOR_SIZE];
   // int cmlen;
 
+  char absPathAsIdx[32];
+  int absPathNEff = 1;
+  absPathAsIdx[0] = 0xFF;
+  
+
   currAbsDir = "/";
   currParentIdx = 0xFF;
 
@@ -611,13 +729,13 @@ void shell() {
     // printString("\r\n");
 
     if (strncmp(command, "cd", 2) == 0) { // change directory
-      shell_cd(&currAbsDir, params, dirBuffer);
+      shell_cd(&currAbsDir, params, dirBuffer, &currParentIdx);
     } else if (strncmp(command, "ls", 2) == 0) { // list directory
       shell_ls(currParentIdx, params);
     } else if (strncmp(command, "cat", 3) == 0) { // cat
       shell_cat(currAbsDir, params, dirBuffer);
     } else if (strncmp(command, "ln", 2) == 0) { // ln
-      shell_ln(currAbsDir, params);
+      shell_ln(currParentIdx, params);
     } else {
       printString("Invalid command");
     }
