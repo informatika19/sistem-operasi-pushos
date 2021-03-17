@@ -638,37 +638,38 @@ void shell_cat(char* currentDir, char* params, char* dirBuffer) {
 }
 
 void shell_ln(int currentDirIdx, char* params) {
-  int entry, indexS;
+  int entry;
   char dirBuffer[SECTOR_SIZE*2];
-  char *paramArray[2];
+  char* fName;
+  int fNameLen;
+  int targetIdx, sourceIdx;
+  char* target;
+  char* source;
 
-  // int numParams = createDelimitedArray(params, paramArray, ' ', 2);
-  int i;
-  // for(i = 0; i < numParams; i++)
-  // {
-  //   printString(paramArray[i]);
-  // };
-
+  tokenizeCommand(params, target, source);
+  
   printString("OK");
+  targetIdx = getIdxOfFileWithNameAndParent(target, currentDirIdx);
 
-  // readSector(dirBuffer, ROOT_SECTOR);
+  readSector(dirBuffer, ROOT_SECTOR);
 
-  // for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-  //   if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
-  //     break;
-  //   }
-  // }
+  for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
+    if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
+      break;
+    }
+  }
 
-  // dirBuffer[FILE_ENTRY_LENGTH * entry + 0] = parent;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 0] = currentDirIdx;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = dirBuffer[FILE_ENTRY_LENGTH * targetIdx + 1];
 
-  // Menyimpan flag S
-  // dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = sector;
+  strcpy(fName, target);
+  fNameLen = strlen(fNameLen);
 
   // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
-  // if (fNameLen < FILE_NAME_LENGTH-1) {
-  //   strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
-    // dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
-  // }
+  if (fNameLen < FILE_NAME_LENGTH-1) {
+    strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
+    dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
+  }
 }
 
 /*
