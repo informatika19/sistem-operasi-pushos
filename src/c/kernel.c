@@ -519,7 +519,7 @@ void shell_ls(char currentDir, char* params){
 
   if(params[0]=='\0'){
     for(i=0;i<32;i++){
-      if(dir[16*i]==parentIdx){ 
+      if(dir[16*i]==currentDir){ 
         printString("\r\n");
         printString(dir+16*i+2);
       }
@@ -578,12 +578,14 @@ void shell() {
   char* command;
   char* params;
   char* currAbsDir;
+  char currParentIdx;
   char mapBuffer[SECTOR_SIZE];
   char dirBuffer[SECTOR_SIZE*2];
   char secBuffer[SECTOR_SIZE];
   // int cmlen;
 
   currAbsDir = "/";
+  currParentIdx = 0xFF;
 
   while (1) {
     readSector(mapBuffer, MAP_SECTOR);
@@ -607,7 +609,7 @@ void shell() {
     if (strncmp(command, "cd", 2) == 0) { // change directory
       shell_cd(&currAbsDir, params, dirBuffer);
     } else if (strncmp(command, "ls", 2) == 0) { // list directory
-      shell_ls(currAbsDir, params, dirBuffer);
+      shell_ls(currParentIdx, params);
     } else if (strncmp(command, "cat", 3) == 0) { // cat
       shell_cat(currAbsDir, params, dirBuffer);
     } else if (strncmp(command, "ln", 2) == 0) { // ln
