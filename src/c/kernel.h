@@ -15,7 +15,7 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer);
 int getFileIdx(char *name, char parentIndex,char *dirBuffer);
 void readFile(char *buffer, char *path, int *result, char parentIndex);
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
-char* findFName(char *path, int *isFile);
+void findFName(char *path, int *isFile, char *fName);
 int getMapEmptySectorCount(char *mapBuffer);
 int getSectorsEmptyEntry(char *secBuffer);
 char* getFileFromIdx(char idx, char *files);

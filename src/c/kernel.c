@@ -259,7 +259,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
   readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
 
   // cek apakah namanya sesuai
-  strcpy(fName, findFName(path, &isFile));
+  findFName(path, &isFile, &fName);
   fNameLen = strlen(fName);
   if (isFile != 1) {
     // printString("Bukan file\r\n");
@@ -293,10 +293,9 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
  * -2 tidak cukup entry,
  * -3 tidak cukup sector kosong,
  * -4 folder tidak valid
- * - harus <= 16 
  */
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
-  int i, j, entry, fNameLen, isFile, indexS, secIndex;
+  int i, j, entry, fNameLen, isFile, flagS, secsNeeded, secIndex;
   char mapBuffer[SECTOR_SIZE];
   char dirBuffer[SECTOR_SIZE*2];
   char secBuffer[SECTOR_SIZE];
@@ -317,7 +316,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
     return;
   }
 
-  strcpy(fName, findFName(path, &isFile));
+  findFName(path, &isFile, &fName);
   fNameLen = strlen(fName);
 
   // Mengecek apakah file sudah ada atau belum
@@ -343,8 +342,14 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
     return;
   }
 
+  // Mencari jumlah sector yang diperlukan
+  secsNeeded = 0;
+  while (buffer[SECTOR_SIZE * secsNeeded] != 0x00) {
+    secsNeeded++;
+  }
+
   // Mengecek apakah jumlah sector di map cukup untuk buffer
-  if (getMapEmptySectorCount(mapBuffer) < sectors) {
+  if (getMapEmptySectorCount(mapBuffer) < secsNeeded) {
     // printString("Map sector yang kosong tidak mencukupi\r\n");
     *sectors = -3;
     return;
@@ -362,14 +367,14 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
     return;
   }
 
-  indexS = getSectorsEmptyEntry(secBuffer);
-  if (indexS == -1) {
+  flagS = getSectorsEmptyEntry(secBuffer);
+  if (flagS == -1) {
     // printString("File penuh\r\n\0");
     *sectors = -3;
     return;
   }
   
-  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = indexS;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = flagS;
 
   // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
   if (fNameLen < FILE_NAME_LENGTH-1) {
@@ -378,15 +383,17 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   }
 
   // Menulis sector
-  for (i = 0; i < sectors; i++) {
+  for (i = 0; i < secsNeeded; i++) {
     // Mencari sector kosong 
     secIndex = 0;
     while (mapBuffer[secIndex] != 0x0 && secIndex < 256) { secIndex++; } // 256 = half of sector size
     mapBuffer[secIndex] = 0xFF;
 
-    secBuffer[indexS * SECTOR_ENTRY_LENGTH + i] = secIndex;
+    secBuffer[flagS * SECTOR_ENTRY_LENGTH + i] = secIndex;
     writeSector(buffer+(i * SECTOR_SIZE), secIndex);
   }
+
+  *sectors = flagS;
 
   writeSector(mapBuffer, MAP_SECTOR);
   writeSector(dirBuffer, ROOT_SECTOR);
@@ -394,11 +401,10 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   writeSector(secBuffer, SECTORS_SECTOR);
 }
 
-char *findFName(char *path, int *isFile) {
+void findFName(char *path, int *isFile, char *fName) {
   int pathLen;
   int i;
   int j;
-  char fName[FILE_NAME_LENGTH];
 
   pathLen = strlen(path);
   *isFile = 0;
@@ -411,8 +417,7 @@ char *findFName(char *path, int *isFile) {
     j++;
   }
 
-  strncpy(fName, path[i], j);
-  return fName;
+  strncpy(&fName, path[i], j);
 }
 
 char* getFileFromIdx(char idx, char *files) {
@@ -496,7 +501,7 @@ void shell_cd(char* absPath, char* params, char* dirBuffer) {
     if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
       return;
     }
-    fName = findFName(params, &isFile);
+    findFName(params, &isFile, &fName);
     if (*isFile != 1) {
       realPath(absPath, params, &newPath);
       strcpy(&absPath, newPath);
@@ -508,27 +513,26 @@ void shell_cd(char* absPath, char* params, char* dirBuffer) {
   }
 }
 
-void shell_ls(char currentDir, char* params){
+void shell_ls(char currentDir, char* params) {
   int i;
-  char dir[2*512];
+  char dir[2 * SECTOR_SIZE];
   char parentIdx = currentDir;
 
- // readSector
-  handleInterrupt21(0x0002, dir, 0x101, 0); 
-  handleInterrupt21(0x0002, dir+512, 0x102, 0);
+  // readSector
+  handleInterrupt21(0x0002, dir, ROOT_SECTOR, 0); 
+  handleInterrupt21(0x0002, dir+512, ROOT_SECTOR+1, 0);
 
-  if(params[0]=='\0'){
-    for(i=0;i<32;i++){
-      if(dir[16*i]==currentDir){ 
+  if (params[0] == '\0') {
+    for (i = 0; i < 32; i++) {
+      if(dir[FILE_ENTRY_LENGTH * i] == currentDir) { 
         printString("\r\n");
         printString(dir+16*i+2);
       }
     }
-  }
-  else if(isPathValid(params,parentIdx,dir)){
-    if(params[0]=='\0'){
-      for(i=0;i<32;i++){
-        if(dir[16*i]==parentIdx){ 
+  } else if (isPathValid(params, parentIdx, dir)) {
+    if (params[0] == '\0') {
+      for (i = 0; i < 32; i++) {
+        if (dir[16*i] == parentIdx) { 
           printString("\r\n");
           printString(dir+16*i+2);
         }
