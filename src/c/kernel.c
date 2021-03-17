@@ -604,7 +604,7 @@ void shell_cd(int pathDepth, char* absPath, char* params, char* dirBuffer, char*
 
   if (strcmp(params, "..") == 0)
   {
-    printString("RETURN\r\n");
+    // printString("RETURN\r\n");
     currentParentIdx = currentPathAsIdx[pathDepth-2];
   } else {
     getParentIndexFromAbsPath(absPath, currentParentIdx);
@@ -613,54 +613,6 @@ void shell_cd(int pathDepth, char* absPath, char* params, char* dirBuffer, char*
     absPath = strcat(absPath, params);
     currentPathAsIdx[pathDepth] = currentParentIdx;
   }
-
-  // tokenizeCommandDelim(params, target, remainder, "/");
-
-  // printString(target);
-
-  // while(strcmp(target, "") > 0)
-  // {
-  //   if (strcmp(target, ".."))
-  //   {
-  //     (*absPathNeff)--;
-  //     strncpy(absPath, absPath, strlen(absPath)-getNameOfFileWithIdx(currentParentIdx, temp));
-  //     currentParentIdx = absPathAsIdx[*absPathNeff-1];
-  //   } else {
-  //     getParentIndexFromAbsPath(absPath, currentParentIdx);
-  //     currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
-  //     absPath = strcat(absPath, params);
-  //     absPathAsIdx[*absPathNeff] = currentParentIdx; 
-  //     (*absPathNeff)++;
-  //   }
-  // }
-
-  // if (strcmp(target, ".."))
-  // {
-  //   (*absPathNeff)--;
-  //   strncpy(absPath, absPath, strlen(absPath)-getNameOfFileWithIdx(currentParentIdx, temp));
-  //   currentParentIdx = absPathAsIdx[*absPathNeff-1];
-  // } else {
-
-  // absPathAsIdx[absPathNeff] = currentParentIdx; 
-  // absPathNeff += 1;
-  // }
-
-
-
-  // if (newPathLen != 0) {
-  //   if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
-  //     return;
-  //   }
-  //   fName = findFName(params, &isFile);
-  //   if (*isFile != 1) {
-  //     realPath(absPath, params, &newPath);
-  //     strcpy(&absPath, newPath);
-  //   } else {
-  //     printString("Bukan berupa direktori\r\n");
-  //   }    
-  // } else {
-  //   printString("Input tidak valid\r\n");
-  // }
 }
 
 void shell_ls(char currentDir, char* params){
