@@ -453,6 +453,15 @@ int getIdxOfFileWithNameAndParent(char* name, int parentIdx)
   return -1;
 }
 
+int getNameOfFileWithIdx(int idX, char* name)
+{
+  char dirBuffer[SECTOR_SIZE*2];
+  readSector(dirBuffer, ROOT_SECTOR);
+  strcpy(name, dirBuffer[FILE_ENTRY_LENGTH * idX + 2], FILE_NAME_LENGTH);
+
+  return strlen(name);
+}
+
 char* getFileFromIdx(char idx, char *files) {
   char fName[FILE_ENTRY_LENGTH];
   strncpy(fName, files[idx * FILE_ENTRY_LENGTH + 2], FILE_NAME_LENGTH);
@@ -485,6 +494,33 @@ void tokenizeCommand(char* raw, char* command, char* param) {
 
   while (raw[i] != '\0') {
     if (raw[i] == ' ') {
+      haveParam = 1;
+      i++;
+    } else if (haveParam == 0) {
+      command[j] = raw[i];
+      j++;
+      i++;
+    } else {
+      param[k] = raw[i];
+      k++;
+      i++;
+    }
+  }
+
+  command[j] = '\0';
+  param[k] = '\0';
+}
+
+void tokenizeCommandDelim(char* raw, char* command, char* param, char delim) {
+  int i, j, k;
+  int haveParam;
+  i = 0;
+  j = 0;
+  k = 0;
+  haveParam = 0;
+
+  while (raw[i] != '\0') {
+    if (raw[i] == delim) {
       haveParam = 1;
       i++;
     } else if (haveParam == 0) {
@@ -564,36 +600,24 @@ int getParentIndexFromAbsPath(char* absPath, int currentParent)
 //   return temp;
 // }
 
-void shell_cd(char** absPath, char* params, char* dirBuffer, char** currentParentIdx) {
+void shell_cd(int pathDepth, char* absPath, char* params, char* dirBuffer, char* currentParentIdx, char* currentPathAsIdx) {
   // params == 0: path tujuan
-  char newPath[MAX_PATH_LENGTH];
-  char *fName;
-  char *parentIdx;
-  int *isFile;
-  int newPathLen;
 
+  char* target;
+  char* remainder;
+  char* temp;
 
-  newPathLen = strlen(params);
-  *parentIdx = 0xFF;
-
-  getParentIndexFromAbsPath(*absPath, *currentParentIdx);
-  *currentParentIdx = getIdxOfFileWithNameAndParent(params, *currentParentIdx);
-  *absPath = strcat(*absPath, params);
-
-  // if (newPathLen != 0) {
-  //   if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
-  //     return;
-  //   }
-  //   fName = findFName(params, &isFile);
-  //   if (*isFile != 1) {
-  //     realPath(absPath, params, &newPath);
-  //     strcpy(&absPath, newPath);
-  //   } else {
-  //     printString("Bukan berupa direktori\r\n");
-  //   }    
-  // } else {
-  //   printString("Input tidak valid\r\n");
-  // }
+  if (strcmp(params, "..") == 0)
+  {
+    // printString("RETURN\r\n");
+    currentParentIdx = currentPathAsIdx[pathDepth-2];
+  } else {
+    getParentIndexFromAbsPath(absPath, currentParentIdx);
+    currentParentIdx = getIdxOfFileWithNameAndParent(params, currentParentIdx);
+    absPath = strcat(absPath, "/");
+    absPath = strcat(absPath, params);
+    currentPathAsIdx[pathDepth] = currentParentIdx;
+  }
 }
 
 void shell_ls(char currentDir, char* params) {
@@ -642,37 +666,38 @@ void shell_cat(char* currentDir, char* params, char* dirBuffer) {
 }
 
 void shell_ln(int currentDirIdx, char* params) {
-  int entry, indexS;
+  int entry;
   char dirBuffer[SECTOR_SIZE*2];
-  char *paramArray[2];
+  char* fName;
+  int fNameLen;
+  int targetIdx, sourceIdx;
+  char* target;
+  char* source;
 
-  // int numParams = createDelimitedArray(params, paramArray, ' ', 2);
-  int i;
-  // for(i = 0; i < numParams; i++)
-  // {
-  //   printString(paramArray[i]);
-  // };
-
+  tokenizeCommand(params, target, source);
+  
   printString("OK");
+  targetIdx = getIdxOfFileWithNameAndParent(target, currentDirIdx);
 
-  // readSector(dirBuffer, ROOT_SECTOR);
+  readSector(dirBuffer, ROOT_SECTOR);
 
-  // for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-  //   if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
-  //     break;
-  //   }
-  // }
+  for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
+    if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
+      break;
+    }
+  }
 
-  // dirBuffer[FILE_ENTRY_LENGTH * entry + 0] = parent;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 0] = currentDirIdx;
+  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = dirBuffer[FILE_ENTRY_LENGTH * targetIdx + 1];
 
-  // Menyimpan flag S
-  // dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = sector;
+  strcpy(fName, target);
+  fNameLen = strlen(fNameLen);
 
   // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
-  // if (fNameLen < FILE_NAME_LENGTH-1) {
-  //   strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
-    // dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
-  // }
+  if (fNameLen < FILE_NAME_LENGTH-1) {
+    strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
+    dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
+  }
 }
 
 /*
@@ -703,10 +728,12 @@ void shell() {
 
   char absPathAsIdx[32];
   int absPathNEff = 1;
+  char* temp;
   absPathAsIdx[0] = 0xFF;
   
-
-  currAbsDir = "/";
+  
+  currAbsDir = "";
+  // currAbsDir = "/";
   currParentIdx = 0xFF;
 
   while (1) {
@@ -722,6 +749,8 @@ void shell() {
 
     tokenizeCommand(rawcommand, command, params);
 
+    currParentIdx = absPathAsIdx[absPathNEff-1];
+
     // printString("\r\n");
     // printString("--");
     // printString(params);
@@ -729,15 +758,26 @@ void shell() {
     // printString("\r\n");
 
     if (strncmp(command, "cd", 2) == 0) { // change directory
-      shell_cd(&currAbsDir, params, dirBuffer, &currParentIdx);
+      shell_cd(absPathNEff, currAbsDir, params, dirBuffer, currParentIdx, absPathAsIdx, absPathNEff);
+
+      if (strcmp(params, "..") == 0)
+      {
+        absPathNEff--;
+      } else {
+        absPathNEff++;
+      }
     } else if (strncmp(command, "ls", 2) == 0) { // list directory
       shell_ls(currParentIdx, params);
     } else if (strncmp(command, "cat", 3) == 0) { // cat
       shell_cat(currAbsDir, params, dirBuffer);
     } else if (strncmp(command, "ln", 2) == 0) { // ln
       shell_ln(currParentIdx, params);
+    }  else if (strncmp(command, "curdir", 6) == 0)
+    {
+      getNameOfFileWithIdx(currParentIdx, temp);
+      printString(temp);
     } else {
-      printString("Invalid command");
+      // printString("Invalid command");
     }
     printString("\r\n");
   }
