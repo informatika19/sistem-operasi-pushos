@@ -19,33 +19,24 @@
 #define ADDR_FILES          ROOT_SECTOR * SECTOR_SIZE
 #define ADDR_SECTORS        SECTORS_SECTOR * SECTOR_SIZE
 
+#define MAX_PATH_LENGTH     64
+#define MAX_CD              32
+
 #define BLUE 0x9
 #define YELLOW 0xE
 #define WHITE 0xF
 
 int main() {
   char buffer[SECTOR_SIZE * 2];
-  char test[16];
-  int *res;
+  char test[64];
   interrupt(0x10, 0x0013, 0, 0, 0);
   // drawImage();
   printLogoGrafik();
-  interrupt(0x15, 0x8600, 0, 5, 0);
+  interrupt(0x15, 0x8600, 0, 4, 0);
   interrupt(0x10, 0x0003, 0, 0, 0);
   printLogoASCII();
 
-  printString("Masukkan input: ");
-  readString(test);
-  printString("\r\nOutput: ");
-  printString(test);
-  printString("\r\n");
-
-  strncpy(buffer, test, 16);
-  writeFile(test, "user", 1, 0xFF);
-  writeFile(buffer, "./test.txt", 1, 0xFF);
-  clear(test,16);
-  readFile(test, "test.txt", &res, 0xFF);
-  printString(test);
+  shell();
 
   while (1);
 }
@@ -178,8 +169,7 @@ void writeSector(char *buffer, int sector) {
   interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
-void parsePath(char *path, char parentIndex, char *parsedPath[]) {
-  // path paling banyak 64 ganti dir
+void parsePath(char *path, char *parsedPath[]) {
   // char pathDir[FILE_ENTRY_TOTAL * FILE_NAME_LENGTH];
   int i, j, k;
   i = 0;
@@ -205,22 +195,20 @@ void parsePath(char *path, char parentIndex, char *parsedPath[]) {
       i++;
     }
   }
-
 }
 
 int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
-  char dir[FILE_ENTRY_TOTAL * FILE_NAME_LENGTH];
+  char dir[MAX_CD * FILE_NAME_LENGTH];
   char name[FILE_NAME_LENGTH];
   char currentParent;
   int index;
   int i;
 
-  parsePath(path, parentIndex, &dir);
-  // strncpy(dir, parsePath(path, parentIndex), FILE_ENTRY_TOTAL * FILE_NAME_LENGTH);
+  parsePath(path, &dir);
   if (dir[0] == -1) { return 0; }
   currentParent = parentIndex;
 
-  for (i = 0; i < FILE_ENTRY_TOTAL && dir[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
+  for (i = 0; i < MAX_CD && dir[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
     clear(name, FILE_NAME_LENGTH);
     if (strncmp(dir[i * FILE_ENTRY_LENGTH + 2], "..", 2) == 0) {
       if (currentParent == 0xFF) {
@@ -229,7 +217,7 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
         currentParent = dirBuffer[currentParent * FILE_ENTRY_LENGTH];
         continue;
       }
-    } else if (dir[i] == '.') {
+    } else if (dir[i * FILE_ENTRY_LENGTH + 2] == '.') {
       continue;
     }
 
@@ -239,10 +227,9 @@ int isPathValid(char *path, char *parentIndex, char *dirBuffer) {
     currentParent = dirBuffer[index * FILE_ENTRY_LENGTH];
   }
 
-  *parentIndex = currentParent;
+  strncpy(&parentIndex, currentParent, 1);
   return 1;
 }
-
 
 int getFileIdx(char *name, char parentIndex, char *dirBuffer) {
   int idx = 0;
@@ -281,7 +268,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
   }
 
   strncpy(&parentIdx, parentIndex, 1);
-  if (isPathValid(path, &parentIdx, dirBuffer) == -1) {
+  if (isPathValid(path, &parentIdx, dirBuffer) == 0) {
     // printString("Path tidak valid");
     // printString("File tidak ditemukan\r\n");
     *result = -1;
@@ -323,8 +310,8 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
 
   // Mem-validasi path
-  strncpy(parentIdx, parentIndex, 1);
-  if (isPathValid(path, &parentIdx, dirBuffer) == -1) {
+  strncpy(&parentIdx, parentIndex, 1);
+  if (isPathValid(path, &parentIdx, dirBuffer) == 0) {
     // printString("Path tidak valid");
     *sectors = -4;
     return;
@@ -428,9 +415,11 @@ char *findFName(char *path, int *isFile) {
   return fName;
 }
 
-// char *getFileFromIdx(char idx, char *files) {
-//   return files[idx*SECTOR_ENTRY_LENGTH+2];
-// }
+char* getFileFromIdx(char idx, char *files) {
+  char fName[FILE_ENTRY_LENGTH];
+  strncpy(fName, files[idx * FILE_ENTRY_LENGTH + 2], FILE_NAME_LENGTH);
+  return fName;
+}
 
 int getMapEmptySectorCount(char *mapBuffer) {
   int i, count;
@@ -457,7 +446,7 @@ void tokenizeCommand(char* raw, char* command, char* param) {
   haveParam = 0;
 
   while (raw[i] != '\0') {
-    if (raw[i]==' ') {
+    if (raw[i] == ' ') {
       haveParam = 1;
       i++;
     } else if (haveParam == 0) {
@@ -470,19 +459,17 @@ void tokenizeCommand(char* raw, char* command, char* param) {
       i++;
     }
   }
-  if (haveParam == 0) {
-    param[k] = '\0' ;
-  }
+
+  command[j] = '\0';
+  param[k] = '\0';
 }
 
-// char* tokenizeCommand(char* raw, int* commandLen)
-// {
+// char* tokenizeCommand(char* raw, int* commandLen) {
 //   char* temp;
 
 //   int i = 0;
 
-//   while(*raw != 0x00 && *raw != ' ')
-//   {
+//   while(*raw != 0x00 && *raw != ' ') {
 //     temp[i] == *raw;
 //     raw++;
 //     i++;
@@ -492,59 +479,76 @@ void tokenizeCommand(char* raw, char* command, char* param) {
 
 //   *commandLen = i;
 //   return temp;
-
 // }
 
-void shell_cd(char** currentDir, char* params, char* dirBuffer) {
-  char *fileName;
+void shell_cd(char* absPath, char* params, char* dirBuffer) {
+  // params == 0: path tujuan
+  char newPath[MAX_PATH_LENGTH];
+  char *fName;
   char *parentIdx;
   int *isFile;
+  int newPathLen;
 
-  strncpy(parentIdx, *currentDir, 14);
+  newPathLen = strlen(params);
+  *parentIdx = 0xFF;
 
-  if (params[0] != '\0') {
-    if (isPathValid(params, parentIdx, dirBuffer) == 1) {
-      fileName = findFName(params, &isFile);
-      if (*isFile != 1) {
-        *currentDir = getFileIdx(fileName, parentIdx, dirBuffer);
-      } else {
-        printString("Input tidak valid \r\n");
-      }    
+  if (newPathLen != 0) {
+    if (isPathValid(params, &parentIdx, dirBuffer) == 0) {
+      return;
+    }
+    fName = findFName(params, &isFile);
+    if (*isFile != 1) {
+      realPath(absPath, params, &newPath);
+      strcpy(&absPath, newPath);
+    } else {
+      printString("Bukan berupa direktori\r\n");
+    }    
+  } else {
+    printString("Input tidak valid\r\n");
+  }
+}
+
+void shell_ls(char* absPath, char* params, char* dirBuffer) {
+  // params <= 1: path
+  int *isFile;
+  char path[MAX_PATH_LENGTH];
+  // char temp[MAX_CD * FILE_NAME_LENGTH];
+  char fName[FILE_NAME_LENGTH];
+  int pathLen;
+  int idx;
+  char *parentIdx;
+
+  *parentIdx = 0xFF;
+  pathLen = strlen(params);
+
+  if (pathLen == 0) {
+    if (strlen(absPath) != 1) {
+      if (isPathValid(absPath, &parentIdx, dirBuffer) == 1) { /* nop */ }
+      for (idx = 0; idx < MAX_CD; idx++) {
+        if (dirBuffer[idx * FILE_ENTRY_LENGTH] == parentIdx) {
+          clear(fName, FILE_NAME_LENGTH);
+          strncpy(fName, dirBuffer[idx*FILE_ENTRY_LENGTH+2], FILE_NAME_LENGTH);
+          printString(fName);
+          printString("\r\n");
+        }
+      }
     }
   } else {
-    printString("Input tidak valid \r\n");
-  }
-}
-
-void shell_ls(char** currentDir, char* params, char* dirBuffer) {
-  char *finalName;
-  char *parentIdx;
-  int idx;
-  int isFile;
-
-  strncpy(parentIdx, *currentDir, 14);
-
-  if (isPathValid(params, parentIdx, dirBuffer) == 1) {
-  strncpy(parentIdx, *currentDir, FILE_NAME_LENGTH);
-
-  if (params[0] == '\0') {
-    for (idx = 0; idx < SECTOR_FILE_TOTAL; idx++) {
-      if (dirBuffer[idx * SECTOR_SIZE] == parentIdx) {
-        printString(getFileFromIdx(idx, dirBuffer));
-        printString("\r\n");
-      }
-    }   
-  } else if (isPathValid(params, parentIdx, dirBuffer) == 1) {
-    for (idx = 0; idx < SECTOR_FILE_TOTAL; idx++) {
-      if (dirBuffer[idx * SECTOR_SIZE] == parentIdx) {
-        printString(getFileFromIdx(idx, dirBuffer));
+    strncpy(path, params, pathLen);
+    if (isPathValid(absPath, &parentIdx, dirBuffer) == 1) { /* nop */ }
+    if (isPathValid(path, &parentIdx, dirBuffer) == 0) { return; }
+    for (idx = 0; idx < MAX_CD; idx++) {
+      if (dirBuffer[idx * FILE_ENTRY_LENGTH] == parentIdx) {
+        clear(fName, FILE_NAME_LENGTH);
+        strncpy(fName, dirBuffer[idx*FILE_ENTRY_LENGTH+2], FILE_NAME_LENGTH);
+        printString(fName);
         printString("\r\n");
       }
     }
   }
 }
 
-void shell_cat(char** currentDir, char* params, char* dirBuffer) {
+void shell_cat(char* currentDir, char* params, char* dirBuffer) {
   char *parentIdx;
   char *buffer;
   int *result;
@@ -553,14 +557,14 @@ void shell_cat(char** currentDir, char* params, char* dirBuffer) {
 
   readFile(buffer, params, result, parentIdx);
 
-  if (*result == 1) {
+  if (result == 1) {
     printString(buffer);
   } else {
     printString("File tidak ditemukan\r\n");
   }
 }
 
-void shell_ln(char** currentDir, char* params) {
+void shell_ln(char* currentDir, char* params) {
   
 }
 
@@ -579,40 +583,85 @@ Command list
     hardlink (create second name for file)
 */
 
-#define shell_isCmd(cmd) (strncmp(command, cmd) == 0;)
-
 void shell() {
   char* rawcommand;
   char* command;
   char* params;
   char* currAbsDir;
+  char mapBuffer[SECTOR_SIZE];
+  char dirBuffer[SECTOR_SIZE*2];
+  char secBuffer[SECTOR_SIZE];
+  // int cmlen;
 
-  int cmlen;
+  currAbsDir = "/";
 
   while (1) {
+    readSector(mapBuffer, MAP_SECTOR);
+    readSector(dirBuffer, ROOT_SECTOR);
+    readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
+    readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
+
+    printString("pushOS:");
     printString(currAbsDir);
     printString("> ");
     readString(rawcommand);
 
     tokenizeCommand(rawcommand, command, params);
-    // params = rawcommand+cmlen;
 
-    if (shell_isCmd("cd")) {
-      // change directory
-      shell_cd(&currAbsDir, params, dirBuffer);        
-    } else if (shell_isCmd("ls")) {
-      // list directory
-      shell_ls(&currAbsDir, params, dirBuffer);
-    } else if (shell_isCmd("cat")) {
-      // cat
-      shell_cat(&currAbsDir, params);
-    } else if (shell_isCmd("ln")) {
-      // ln
-      shell_ln(&currAbsDir, params);
+    // printString("\r\n");
+    // printString("--");
+    // printString(params);
+    // printString("--");
+    // printString("\r\n");
+
+    if (strncmp(command, "cd", 2) == 0) { // change directory
+      shell_cd(&currAbsDir, params, dirBuffer);
+    } else if (strncmp(command, "ls", 2) == 0) { // list directory
+      shell_ls(currAbsDir, params, dirBuffer);
+    } else if (strncmp(command, "cat", 3) == 0) { // cat
+      shell_cat(currAbsDir, params, dirBuffer);
+    } else if (strncmp(command, "ln", 2) == 0) { // ln
+      shell_ln(currAbsDir, params);
     } else {
-      printString("Invalid command\r\n");
+      printString("Invalid command");
     }
+    printString("\r\n");
   }
 }
 
+void realPath(char *absPath, char *path, char *newAbsPath) {
+  int i, j;
+  char pathSrc[MAX_CD * FILE_ENTRY_LENGTH];
+  char pathDest[MAX_CD * FILE_ENTRY_LENGTH];
+  char name[FILE_NAME_LENGTH];
 
+  j = 0;
+
+  if (strcmp(absPath, "/")) {}
+
+  parsePath(absPath, &pathDest);
+  parsePath(path, &pathSrc);
+
+  for (i = 0; i < MAX_CD && pathDest[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
+    j++;
+  }
+
+  for (i = 0; i < MAX_CD && pathSrc[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
+    if (strncmp(pathSrc[i * FILE_ENTRY_LENGTH + 2], "..", 2) == 0) {
+      clear(pathDest+(j), FILE_ENTRY_LENGTH);
+      j--;
+      continue;
+    } else if (pathSrc[i  * FILE_ENTRY_LENGTH + 2] == '.') {
+      continue;
+    } else {
+      strncpy(&pathDest[j * FILE_ENTRY_LENGTH + 2], pathSrc[i * FILE_ENTRY_LENGTH + 2], FILE_NAME_LENGTH);
+    }
+  }
+
+  for (i = 0; i < MAX_CD && pathDest[i * FILE_ENTRY_LENGTH + 2] != 0x00; i++) {
+    clear(name, FILE_NAME_LENGTH);
+    strncpy(&name, pathDest[i * FILE_NAME_LENGTH + 2], FILE_NAME_LENGTH);
+    strcat(*newAbsPath, name);
+    strcat(*newAbsPath, '/');
+  }
+}
