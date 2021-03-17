@@ -23,9 +23,9 @@ void shell();
 // char* tokenizeCommand(char* raw, int* commandLen);
 void tokenizeCommand(char* raw, char* command, char* param);
 void shell_cd(char* currentDir, char* params, char* dirBuffer);
-void shell_ls(char* currentDir, char* params, char* dirBuffer);
+void shell_ls(char currentDir, char* params);
 void shell_cat(char* currentDir, char* params, char* dirBuffer);
-void shell_ln(char* currentDir, char* params);
+void shell_ln(int currentDirIdx, char* params);
 void realPath(char *absPath, char *path, char *newPath);
 
 #endif
