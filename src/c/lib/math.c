@@ -1,4 +1,4 @@
-#include "math.h"
+#include "headers/math.h"
 
 int div(int a, int b) {
   int x = 0;

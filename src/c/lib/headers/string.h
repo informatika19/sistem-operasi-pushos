@@ -9,4 +9,8 @@ char *strncpy(char *dest, char *src, int n);
 char *strcat(char *dest, char *src);
 char *strncat(char *dest, char *src, int n);
 
+void printString(char *string);
+void printNumber(int number);
+void readString(char *string);
+
 #endif

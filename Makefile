@@ -5,7 +5,9 @@ SRC=src
 OUT_DIR=out
 ASM_DIR=$(SRC)/asm
 C_DIR=$(SRC)/c
-LIB_C_DIR=$(SRC)/c/lib
+LIB_C_DIR=$(C_DIR)/lib
+SHELL_C_DIR=$(C_DIR)/shell
+SHELL_C_APP_DIR=$(SHELL_C_DIR)/utilities
 # BOOT_LOGO_DIR=$(SRC)/other
 
 KSIZE=50
@@ -17,8 +19,14 @@ KERNEL_ASM=$(ASM_DIR)/kernel.asm
 KERNEL_ASM_OUT=$(OUT_DIR)/kernel_asm.o
 # BOOT_LOGO_OUT=$(OUT_DIR)/logo.bin
 
-LIB_C=math string
+LIB_C=math string logo fileIO folderIO
 LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
+
+SHELL_C_APP=mv cp mkdir rm cat ln
+SHELL_C_APP_OUT=$(patsubst %, $(OUT_DIR)/shell_%.o, $(SHELL_C_APP))
+
+SHELL_C=shell
+SHELL_C_OUT=$(patsubst %, $(OUT_DIR)/shell.o, $(SHELL_C))
 
 BOOTLOADER=$(OUT_DIR)/bootloader
 BOOTLOADER_ASM=$(ASM_DIR)/bootloader.asm
@@ -28,11 +36,17 @@ MAP_IMG=$(OUT_DIR)/map.img
 SECTORS_IMG=$(OUT_DIR)/sectors.img
 FILES_IMG=$(OUT_DIR)/files.img
 
+$(OUT_DIR):
+	mkdir $(OUT_DIR)
+
 $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 	bcc -ansi -c -o $@ $<
 
-$(OUT_DIR):
-	mkdir $(OUT_DIR)
+$(OUT_DIR)/shell_%.o: $(SHELL_C_APP_DIR)/%.c
+	bcc -ansi -c -o $@ $<
+
+$(OUT_DIR)/shell.o: $(SHELL_C_DIR)/$(SHELL_C).c
+	bcc -ansi -c -o $@ $<
 
 # $(BOOT_LOGO_OUT): $(BOOT_LOGO_DIR)/logo.png
 # 	python3 $(BOOT_LOGO_DIR)/image2bin.py $< $@
@@ -64,7 +78,7 @@ $(KERNEL_OUT): $(KERNEL_C) $(OUT_DIR)
 $(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR) # $(BOOT_LOGO_OUT)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
-$(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(KERNEL_ASM_OUT)
+$(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(SHELL_C_APP_OUT) $(SHELL_C_OUT) $(KERNEL_ASM_OUT)
 	ld86 -o $@ -d $^
 
 $(LANG):

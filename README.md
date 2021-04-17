@@ -16,6 +16,7 @@ Tested on ubuntu.
 ## File Markdown
 * [MILESTONE 1](docs/MILESTONE1.md)
 * [MILESTONE 2](docs/MILESTONE2.md)
+* [MILESTONE 3](docs/MILESTONE3.md)
 ## Anggota Kelompok PushOS
 * 13519116 Jeane Mikha Erwansyah
 * 13519131 Hera Shafira
