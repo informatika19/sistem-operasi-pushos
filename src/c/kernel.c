@@ -1,5 +1,8 @@
 #include "kernel.h"
 
+#include "lib/lib.h"
+#include "shell/shell.h"
+
 int main() {
   char buffer[SECTOR_SIZE];
 

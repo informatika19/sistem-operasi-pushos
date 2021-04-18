@@ -7,8 +7,8 @@ void shell_cp(char cwdIdx, char *resourcePath, char *destinationPath) {
   char dir[2 * SECTOR_SIZE];
   int res = 0;
 
-  interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
-  interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
+  interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
+  interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
 
   // read file
   interrupt(0x21, (cwdIdx << 8) + 0x04, buf, resourcePath, &res);
