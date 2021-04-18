@@ -1,19 +1,18 @@
 #include "kernel.h"
 
-#define ADDR_MAP            MAP_SECTOR * SECTOR_SIZE
-#define ADDR_FILES          ROOT_SECTOR * SECTOR_SIZE
-#define ADDR_SECTORS        SECTORS_SECTOR * SECTOR_SIZE
-
 int main() {
-  char buffer[SECTOR_SIZE * 2];
-  char test[64];
-  interrupt(0x10, 0x0013, 0, 0, 0);
-  // drawImage();
-  printLogoGrafik();
-  interrupt(0x15, 0x8600, 0, 4, 0);
-  interrupt(0x10, 0x0003, 0, 0, 0);
-  printLogoASCII();
+  char buffer[SECTOR_SIZE];
 
+  makeInterrupt21();
+
+  interrupt(0x10, 0x0013, 0, 0, 0); // set video mode
+  printLogoGrafik();
+  interrupt(0x15, 0x8600, 0, 4, 0); // sleep
+  interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
+  printLogoASCII();
+  printString("press enter to continue...");
+  readString(0);
+  interrupt(0x10, 0x0003, 0, 0, 0);
   shell();
 
   while (true);
@@ -71,7 +70,7 @@ void executeProgram(char *filename, int segment, int *success, char parentIndex)
 
 void clear(char *buffer, int length) {
   int i;
-  for (i = 0; i < length; i++) {
+  for (; i < length; i++) {
     buffer[i] = 0;
   }
 }

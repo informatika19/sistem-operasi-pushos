@@ -1,4 +1,3 @@
-TOOLS=tools
 BOCHS?=bochs
 
 SRC=src

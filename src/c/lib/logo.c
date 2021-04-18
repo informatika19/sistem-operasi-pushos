@@ -2,14 +2,23 @@
 
 void printLogoGrafik() {
   lineLogo("           `...........`   `...`      ...`   `.....``  `..`     `..`           ",0);
-  lineLogo("           ..............` `....     `.... `.........` ....    `....           ",1);
-  lineLogo("           .....`````..... `....     `.... ....`  ```  ....    `....           ",2);
-  lineLogo("           ..--`     `.... `....     ..... .....``     ....``` `....           ",3);
-  lineLogo("           /ooo+:-...-://. -:-..     :o/:. `../+oo/.   ..-/+oo+:-...           ",4);
-  lineLogo("           +ooo+//:-:::.`  /oo+:     /ooo/   `-/oooo+``+ooooooooo+//           ",5);
-  lineLogo("           +ooo:  ``````.  -ooo+`   `/ooo:      .+ooo:`oooo.```-ooo+           ",6);
-  lineLogo("           +ooo:  -------.  /ooo+:-:+ooo/``/+/:-:+ooo.`ooo+`   -ooo+           ",7);
-  lineLogo("           /ooo-  +++++:.-. `-+ooooooo+-` `+ooooooo+- `ooo+`   .ooo/           ",8);
+  lineLogo("           `...........`   `...`      ...`   `.....``  `..`     `..`           ",1);
+  lineLogo("           ..............` `....     `.... `.........` ....    `....           ",2);
+  lineLogo("           ..............` `....     `.... `.........` ....    `....           ",3);
+  lineLogo("           .....`````..... `....     `.... ....`  ```  ....    `....           ",4);
+  lineLogo("           .....`````..... `....     `.... ....`  ```  ....    `....           ",5);
+  lineLogo("           ..--`     `.... `....     ..... .....``     ....``` `....           ",6);
+  lineLogo("           ..--`     `.... `....     ..... .....``     ....``` `....           ",7);
+  lineLogo("           /ooo+:-...-://. -:-..     :o/:. `../+oo/.   ..-/+oo+:-...           ",8);
+  lineLogo("           /ooo+:-...-://. -:-..     :o/:. `../+oo/.   ..-/+oo+:-...           ",9);
+  lineLogo("           +ooo+//:-:::.`  /oo+:     /ooo/   `-/oooo+``+ooooooooo+//           ",10);
+  lineLogo("           +ooo+//:-:::.`  /oo+:     /ooo/   `-/oooo+``+ooooooooo+//           ",11);
+  lineLogo("           +ooo:  ``````.  -ooo+`   `/ooo:      .+ooo:`oooo.```-ooo+           ",12);
+  lineLogo("           +ooo:  ``````.  -ooo+`   `/ooo:      .+ooo:`oooo.```-ooo+           ",13);
+  lineLogo("           +ooo:  -------.  /ooo+:-:+ooo/``/+/:-:+ooo.`ooo+`   -ooo+           ",14);
+  lineLogo("           +ooo:  -------.  /ooo+:-:+ooo/``/+/:-:+ooo.`ooo+`   -ooo+           ",15);
+  lineLogo("           /ooo-  +++++:.-. `-+ooooooo+-` `+ooooooo+- `ooo+`   .ooo/           ",16);
+  lineLogo("           /ooo-  +++++:.-. `-+ooooooo+-` `+ooooooo+- `ooo+`   .ooo/           ",17);
 }
 
 void printLogoASCII() {

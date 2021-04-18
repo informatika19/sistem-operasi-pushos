@@ -32,10 +32,8 @@ char *strcpy(char *dest, char *src) {
 
 char *strncpy(char *dest, char *src, int n) {
   int i;
-  for (i = 0; i < n && src[i] != '\0'; i++)
-    dest[i] = src[i];
-  for ( ; i < n; i++)
-    dest[i] = '\0';
+  for (i = 0; i < n && src[i] != '\0'; i++) dest[i] = src[i];
+  for ( ; i < n; i++) dest[i] = '\0';
   return dest;
 }
 
@@ -48,8 +46,7 @@ char *strncat(char *dest, char *src, int n) {
   int dest_len = strlen(dest);
   int i;
 
-  for (i = 0 ; i < n && src[i] != '\0' ; i++)
-    dest[dest_len + i] = src[i];
+  for (i = 0 ; i < n && src[i] != '\0' ; i++) dest[dest_len + i] = src[i];
   dest[dest_len + i] = '\0';
 
   return dest;
@@ -66,10 +63,13 @@ void readString(char *string) {
   int i = 0;
   while (1) {
     int key = interrupt(0x16, 0, 0, 0, 0);
-    if (key == 0xD) {              
+    switch (key) {
+    case 0xD:
       string[i] = 0x0;
+      printString("\r\n");
       return;
-    } else if (key == 0x8) {
+      // break;
+    case 0x8:
       if (i > 0) {
         string[i] = 0x0;
         i--;
@@ -79,11 +79,12 @@ void readString(char *string) {
         i--;
         interrupt(0x10, 0x0E00 + 0x8, 0, 0, 0);
       }
-    } else {
+    default:
       string[i] = key;
       interrupt(0x10, 0x0E00 + key, 0, 0, 0);
       i++;
-    }     
+      break;
+    }
   }
 }
 
@@ -97,7 +98,7 @@ void printNumber(int number) {
 
   if (number < 10) {
     c = number + '0';
-    interrupt(0x10, 0x0E00 + c, 0x0000 + WHITE, 0x0000, 0x0000);
+    interrupt(0x10, 0x0E00 + c, 0, 0, 0);
   } else {
     printNumber(div(number, 10));
     printNumber(mod(number, 10));

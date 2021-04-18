@@ -1,5 +1,14 @@
 #include "shell.h"
 
+#include "../lib/lib.h"
+#include "../kernel.h"
+#include "utilities/headers/cat.h"
+#include "utilities/headers/cp.h"
+#include "utilities/headers/ln.h"
+#include "utilities/headers/mkdir.h"
+#include "utilities/headers/mv.h"
+#include "utilities/headers/rm.h"
+
 int shell() {
   char command[10 * MAXIMUM_CMD_LEN];  // kalo pointer aja takut error
   char argv[10][MAXIMUM_CMD_LEN];
@@ -11,7 +20,7 @@ int shell() {
 
   int argc, histc = 0, i;
 
-  strncpy(username, "pushOS", 11);
+  strncpy(username, "pushOS", 6);
   atSymb[0] = '@';
   atSymb[1] = 0;
   cwdName[0] = '/';
@@ -35,14 +44,14 @@ int shell() {
     argc = commandParser(command, argv);
     if (argc < 0) {
       // TODO: bad UX because doesn't tell the error
-      interrupt(0x21, 0, "Terjadi kesalahan saat membaca perintah\n", 0, 0);
+      // interrupt(0x21, 0, "Terjadi kesalahan saat membaca perintah\r\n", 0, 0);
       continue;
     }
 
     // eksekusi perintah
-    if (strncmp("shell_cd", argv[0], MAXIMUM_CMD_LEN) == 0) {
+    if (strncmp("cd", argv[0], MAXIMUM_CMD_LEN) == 0) {
       if (argc != 2) {
-        interrupt(0x21, 0, "Penggunaan: shell_cd <path/direktori>\n", 0, 0);
+        interrupt(0x21, 0, "Penggunaan: cd <path/direktori>\r\n", 0, 0);
       } else {
         shell_cd(&cwdIdx, argv[1], cwdName);
       }
@@ -50,13 +59,13 @@ int shell() {
       shell_ls(cwdIdx);
     } else if (strncmp("cat", argv[0], MAXIMUM_CMD_LEN) == 0) {
       if (argc != 2) {
-        interrupt(0x21, 0, "Penggunaan: cat <path/file>\n", 0, 0);
+        interrupt(0x21, 0, "Penggunaan: cat <path/file>\r\n", 0, 0);
       } else {
         shell_cat(cwdIdx, argv[1]);
       }
     } else if (strncmp("ln", argv[0], MAXIMUM_CMD_LEN) == 0) {
       if (argc != 3) {
-        interrupt(0x21, 0, "Penggunaan: ln <path/sumber> <path/tujuan>\n", 0, 0);
+        interrupt(0x21, 0, "Penggunaan: ln <path/sumber> <path/tujuan>\r\n", 0, 0);
       } else {
         shell_hardLink(cwdIdx, argv[1], argv[2]);
       }
@@ -64,34 +73,34 @@ int shell() {
       printNumber(cwdIdx);
       printString(" - ");
       printString(cwdName);
-      printString("\n");
+      printString("\r\n");
     } else if (strncmp("history", argv[0], MAXIMUM_CMD_LEN) == 0) {
       for (i = 0; i < HIST_SIZE; i++) {
         if (strlen(hist[i]) != 0) {
           printString(hist[i]);
-          printString("\n");
+          printString("\r\n");
         }
       }
     } else if (strncmp("cp", argv[0], MAXIMUM_CMD_LEN) == 0) {
       if (argc != 3) {
-        interrupt(0x21, 0,
-                  "Penggunaan: cp <path/sumber> <path/tujuan>\n", 0, 0);
+        interrupt(0x21, 0, "Penggunaan: cp <path/sumber> <path/tujuan>\r\n", 0, 0);
       } else {
         shell_cp(cwdIdx, argv[1], argv[2]);
       }
     } else {
       interrupt(0x21, 0, "Perintah ", 0, 0);
       interrupt(0x21, 0, argv[0], 0, 0);
-      interrupt(0x21, 0, " tidak dikenali.\n", 0, 0);
+      interrupt(0x21, 0, " tidak dikenali.\r\n", 0, 0);
     }
 
     // HISTORY
     histc = (histc >= HIST_SIZE) ? 0 : histc;
     for (i = 1; i < HIST_SIZE; i++) {
-        strcpy(hist[i - 1], hist[i]);
+      strcpy(hist[i - 1], hist[i]);
     }
     strcpy(hist[HIST_SIZE - 1], command);
     histc++;
+    printString("\r");
   }
 }
 
@@ -100,8 +109,7 @@ int commandParser(char *cmd, char *argument) {
   bool stop = false;
 
   i = 0, j = 0;
-  for (; *cmd == ' '; cmd++)
-    ;
+  for (; *cmd == ' '; cmd++);
   while (*cmd != '\0' && !stop) {
     stop = i >= MAXIMUM_CMD_LEN;
     switch (*cmd) {
@@ -134,8 +142,8 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
 
   if (strncmp(path, ".", MAXIMUM_CMD_LEN)) {
     if (strncmp(path, "/", MAXIMUM_CMD_LEN) != 0) {
-      interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
-      interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
+      interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
+      interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
 
       test = getFileIndex(path, *parentIndex, dir);
       tmpPI = test & 0xFF;
@@ -155,12 +163,12 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
           strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, 14);
       } else {
           interrupt(0x21, 0, path, 0, 0);
-          interrupt(0x21, 0, " bukan direktori.\n", 0, 0);
+          interrupt(0x21, 0, " bukan direktori.\r\n", 0, 0);
       }
     } else {
       interrupt(0x21, 0, "Direktori ", 0, 0);
       interrupt(0x21, 0, path, 0, 0);
-      interrupt(0x21, 0, " tidak ditemukan.\n", 0, 0);
+      interrupt(0x21, 0, " tidak ditemukan.\r\n", 0, 0);
     }
   }
   return;
@@ -171,14 +179,14 @@ void shell_ls(char parentIndex) {
   int i = 0;
   char dir[2 * SECTOR_SIZE];
 
-  interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
-  interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
+  interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
+  interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
 
-  while (i < 1024) {
+  while (i < 2 * SECTOR_SIZE) {
     if (*(dir + i) == parentIndex && *(dir + i + 2) != 0) {
         interrupt(0x21, 0, dir + i + 2, 0, 0);
         if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
-        interrupt(0x21, 0, "\n", 0, 0);
+        interrupt(0x21, 0, "\r\n", 0, 0);
     }
     i += 16;
   }
