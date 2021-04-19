@@ -5,18 +5,11 @@
 
 int main() {
   char buffer[SECTOR_SIZE];
+  char *success;
 
   makeInterrupt21();
 
-  interrupt(0x10, 0x0013, 0, 0, 0); // set video mode
-  printLogoGrafik();
-  interrupt(0x15, 0x8600, 0, 4, 0); // sleep
-  interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
-  printLogoASCII();
-  printString("press enter to continue...");
-  readString(0);
-  interrupt(0x10, 0x0003, 0, 0, 0);
-  shell();
+  executeProgram("logo", 0x3000, &success, 0x00); // segmennya dukun anjay
 
   while (true);
 }
@@ -59,21 +52,15 @@ void executeProgram(char *filename, int segment, int *success, char parentIndex)
   // Buka file dengan readFile
   readFile(&fileBuffer, filename, &isSuccess, parentIndex);
   // If success, salin dengan putInMemory
+  printNumber(isSuccess);
   if (isSuccess) {
     // launchProgram
     int i = 0;
-    for (i = 0; i < 512*16; i++) {
+    for (i = 0; i < 512 * 16; i++) {
       putInMemory(segment, i, fileBuffer[i]);
     }
     launchProgram(segment);
   } else {
     interrupt(0x21, 0, "File not found!", 0,0);
-  }
-}
-
-void clear(char *buffer, int length) {
-  int i;
-  for (; i < length; i++) {
-    buffer[i] = 0;
   }
 }

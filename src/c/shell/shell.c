@@ -1,24 +1,17 @@
 #include "shell.h"
 
 #include "../lib/lib.h"
-#include "../kernel.h"
-#include "utilities/headers/cat.h"
-#include "utilities/headers/cp.h"
-#include "utilities/headers/ln.h"
-#include "utilities/headers/mkdir.h"
-#include "utilities/headers/mv.h"
-#include "utilities/headers/rm.h"
 
-int shell() {
+int main() {
   char command[10 * MAXIMUM_CMD_LEN];  // kalo pointer aja takut error
-  char argv[10][MAXIMUM_CMD_LEN];
+  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
 
-  char hist[HIST_SIZE][10 * MAXIMUM_CMD_LEN];
+  char hist[HIST_SIZE][10 * 20];
 
   char username[11], cwdName[14], promptHead[3], prompt[27], atSymb[2];
-  char cwdIdx = 0xFF;
+  char *cwdIdx = 0xFF;
 
-  int argc, histc = 0, i;
+  int argc, histc = 0, i, cmd, *err;
 
   strncpy(username, "pushOS", 6);
   atSymb[0] = '@';
@@ -29,7 +22,11 @@ int shell() {
   promptHead[1] = ' ';
   promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
+
   while (true) {
+    getParameter(&cwdIdx, argv);
+    if (strncpy(&argv[1], 0xFF, 1) == 0) clear(argv[1], 1);
+
     // set prompt
     clear(prompt, 27);
     strncat(prompt, username, strlen(username));
@@ -39,58 +36,73 @@ int shell() {
     interrupt(0x21, 0, prompt, 0, 0);
 
     interrupt(0x21, 1, command, 0, 0);
-
     // parse dan hasil parse
     argc = commandParser(command, argv);
-    if (argc < 0) {
-      // TODO: bad UX because doesn't tell the error
-      // interrupt(0x21, 0, "Terjadi kesalahan saat membaca perintah\r\n", 0, 0);
-      continue;
-    }
 
-    // eksekusi perintah
-    if (strncmp("cd", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 2) {
-        interrupt(0x21, 0, "Penggunaan: cd <path/direktori>\r\n", 0, 0);
-      } else {
-        shell_cd(&cwdIdx, argv[1], cwdName);
-      }
-    } else if (strncmp("ls", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      shell_ls(cwdIdx);
-    } else if (strncmp("cat", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 2) {
-        interrupt(0x21, 0, "Penggunaan: cat <path/file>\r\n", 0, 0);
-      } else {
-        shell_cat(cwdIdx, argv[1]);
-      }
-    } else if (strncmp("ln", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 3) {
-        interrupt(0x21, 0, "Penggunaan: ln <path/sumber> <path/tujuan>\r\n", 0, 0);
-      } else {
-        shell_hardLink(cwdIdx, argv[1], argv[2]);
-      }
-    } else if (strncmp("cwd", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      printNumber(cwdIdx);
-      printString(" - ");
-      printString(cwdName);
-      printString("\r\n");
-    } else if (strncmp("history", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      for (i = 0; i < HIST_SIZE; i++) {
-        if (strlen(hist[i]) != 0) {
-          printString(hist[i]);
-          printString("\r\n");
-        }
-      }
-    } else if (strncmp("cp", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 3) {
-        interrupt(0x21, 0, "Penggunaan: cp <path/sumber> <path/tujuan>\r\n", 0, 0);
-      } else {
-        shell_cp(cwdIdx, argv[1], argv[2]);
-      }
+    if (argc < 0) {
+      // printString("gamasuk euy\r\n")
+      printString("\r");
+      continue;
     } else {
-      interrupt(0x21, 0, "Perintah ", 0, 0);
-      interrupt(0x21, 0, argv[0], 0, 0);
-      interrupt(0x21, 0, " tidak dikenali.\r\n", 0, 0);
+      setParameter(cwdIdx, argv);
+      cmd = cmdcmp(argv[0]);
+      switch(cmd) {
+        case 1: // cd
+          if (argc != 2) {
+            interrupt(0x21, 0, "Usage: cd <path/directory>\r\n", 0, 0);
+          } else {
+            shell_cd(&cwdIdx, argv[1], cwdName);
+          }
+          break;
+        case 2: // ls
+          shell_ls(cwdIdx);
+          break;
+        case 3: // cat
+          if (argc != 2) {
+            interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
+          } else {
+            interrupt(0x21, 0x0006, "cat", 0x3000, &err, 0);
+          }
+          break;
+        case 4: // ln
+          if (argc != 3) {
+            interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
+          } else {
+            interrupt(0x21, 0x0006, "ln", 0x3000, &err, 0);
+          }
+          break;
+        case 5: // cwd
+          printNumber(cwdIdx);
+          printString(" - ");
+          printString(cwdName);
+          printString("\r\n");
+          break;
+        case 6: // history
+          for (i = 0; i < HIST_SIZE; i++) {
+            if (strlen(hist[i]) != 0) {
+              printString(hist[i]);
+              printString("\r\n");
+            }
+          }
+          break;
+        case 7: // cp
+          if (argc != 3) {
+            interrupt(0x21, 0, "Usage: cp <path/src> <path/dest>\r\n", 0, 0);
+          } else {
+            interrupt(0x21, 0x0006, "cp", 0x3000, &err, 0);
+          }
+          break;
+        case 8: // mv
+          break;
+        case 9: // rm
+          break;
+        case 10: // mkdir
+          break;
+        default: // -1
+          interrupt(0x21, 0, "Unknown command ", 0, 0);
+          interrupt(0x21, 0, argv[0], 0, 0);
+          interrupt(0x21, 0, "\r\n", 0, 0);
+      }
     }
 
     // HISTORY
@@ -104,12 +116,27 @@ int shell() {
   }
 }
 
+int cmdcmp(char *cmd) {
+  if (strncmp("cd", *cmd, MAXIMUM_CMD_LEN) == 0) return 1;
+  if (strncmp("ls", *cmd, MAXIMUM_CMD_LEN) == 0) return 2;
+  if (strncmp("cat", *cmd, MAXIMUM_CMD_LEN) == 0) return 3;
+  if (strncmp("ln", *cmd, MAXIMUM_CMD_LEN) == 0) return 4;
+  if (strncmp("cwd", *cmd, MAXIMUM_CMD_LEN) == 0) return 5;
+  if (strncmp("history", *cmd, MAXIMUM_CMD_LEN) == 0) return 6;
+  if (strncmp("cp", *cmd, MAXIMUM_CMD_LEN) == 0) return 7;
+  if (strncmp("mv", *cmd, MAXIMUM_CMD_LEN) == 0) return 8;
+  if (strncmp("rm", *cmd, MAXIMUM_CMD_LEN) == 0) return 9;
+  if (strncmp("mkdir", *cmd, MAXIMUM_CMD_LEN) == 0) return 10;
+  return -1;
+}
+
 int commandParser(char *cmd, char *argument) {
   int i, j;
   bool stop = false;
 
   i = 0, j = 0;
   for (; *cmd == ' '; cmd++);
+  stop = cmd == '\n';
   while (*cmd != '\0' && !stop) {
     stop = i >= MAXIMUM_CMD_LEN;
     switch (*cmd) {

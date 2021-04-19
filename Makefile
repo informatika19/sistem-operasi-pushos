@@ -7,25 +7,28 @@ C_DIR=$(SRC)/c
 LIB_C_DIR=$(C_DIR)/lib
 SHELL_C_DIR=$(C_DIR)/shell
 SHELL_C_APP_DIR=$(SHELL_C_DIR)/utilities
-# BOOT_LOGO_DIR=$(SRC)/other
+TOOLS_DIR=tools
+BIN=bin
 
 KSIZE=50
+
+SHELL_C=$(SHELL_C_DIR)/shell.c
+SHELL_OUT=$(OUT_DIR)/shell.o
+SHELLL=$(BIN)/shell
+LIB_ASM=$(ASM_DIR)/lib.asm
+LIB_ASM_OUT=$(OUT_DIR)/lib_asm.o
 
 KERNEL_C=$(C_DIR)/kernel.c
 KERNEL_OUT=$(OUT_DIR)/kernel.o
 KERNEL=$(OUT_DIR)/kernel
 KERNEL_ASM=$(ASM_DIR)/kernel.asm
 KERNEL_ASM_OUT=$(OUT_DIR)/kernel_asm.o
-# BOOT_LOGO_OUT=$(OUT_DIR)/logo.bin
 
-LIB_C=math string logo fileIO folderIO
+LIB_C=math string fileIO folderIO
 LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
 
-SHELL_C_APP=mv cp mkdir rm cat ln
+SHELL_C_APP=cat mv cp mkdir rm ln logo
 SHELL_C_APP_OUT=$(patsubst %, $(OUT_DIR)/shell_%.o, $(SHELL_C_APP))
-
-SHELL_C=shell
-SHELL_C_OUT=$(patsubst %, $(OUT_DIR)/shell.o, $(SHELL_C))
 
 BOOTLOADER=$(OUT_DIR)/bootloader
 BOOTLOADER_ASM=$(ASM_DIR)/bootloader.asm
@@ -35,8 +38,17 @@ MAP_IMG=$(OUT_DIR)/map.img
 SECTORS_IMG=$(OUT_DIR)/sectors.img
 FILES_IMG=$(OUT_DIR)/files.img
 
+# LOADFILE_CPP=$(TOOLS_DIR)/loadfile/loadfile.cpp
+# LOADFILE=$(OUT_DIR)/loadfile
+
+# $(LOADFILE): $(OUT_DIR)
+# 	gcc -o $@ $(LOADFILE_CPP)
+
 $(OUT_DIR):
 	mkdir $(OUT_DIR)
+
+$(BIN):
+	mkdir $(BIN)
 
 $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 	bcc -ansi -c -o $@ $<
@@ -44,11 +56,19 @@ $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 $(OUT_DIR)/shell_%.o: $(SHELL_C_APP_DIR)/%.c
 	bcc -ansi -c -o $@ $<
 
-$(OUT_DIR)/shell.o: $(SHELL_C_DIR)/$(SHELL_C).c
+$(SHELL_OUT): $(SHELL_C)
 	bcc -ansi -c -o $@ $<
 
-# $(BOOT_LOGO_OUT): $(BOOT_LOGO_DIR)/logo.png
-# 	python3 $(BOOT_LOGO_DIR)/image2bin.py $< $@
+$(LIB_ASM_OUT): $(LIB_ASM) $(OUT_DIR)
+	nasm -f as86 $< -o $@ -I $(OUT_DIR)
+
+$(SHELLL): $(SHELL_OUT) $(LIB_C_OUT) $(LIB_ASM_OUT)
+	ld86 -o $@ -d $^
+	python3 tools/loadfile/loadfile.py out/system.img $@
+
+$(SHELL_C_APP): $(LIB_C_OUT) $(LIB_ASM_OUT)
+	ld86 -o $(BIN)/$@ -d $(OUT_DIR)/shell_$@.o $^
+	python3 tools/loadfile/loadfile.py out/system.img $(BIN)/$@
 
 $(MAP_IMG):
 	dd if=/dev/zero of=$@ bs=512 count=1
@@ -74,21 +94,24 @@ $(BOOTLOADER): $(BOOTLOADER_ASM)
 $(KERNEL_OUT): $(KERNEL_C) $(OUT_DIR)
 	bcc -ansi -c -o $@ $<
 
-$(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR) # $(BOOT_LOGO_OUT)
+$(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
-$(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(SHELL_C_APP_OUT) $(SHELL_C_OUT) $(KERNEL_ASM_OUT)
+$(KERNEL): $(KERNEL_OUT) $(LIB_C_OUT) $(KERNEL_ASM_OUT)
 	ld86 -o $@ -d $^
 
 $(LANG):
 	LANG=en-us.UTF-8
 
-build: $(LANG) $(SYS_IMG)
+loadshell: $(BIN) $(OUT_DIR) $(SHELLL) $(SHELL_C_APP_OUT) $(SHELL_C_APP)
+
+build: $(LANG) $(SYS_IMG) loadshell
 
 run: build
 	$(BOCHS) -f if2230.config
 
 clean:
 	rm -rf out/*
+	rm -rf bin/*
 
 .PHONY: build run clean
