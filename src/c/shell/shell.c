@@ -14,7 +14,7 @@ int main() {
   char username[7], cwdName[FILE_NAME_LENGTH], promptHead[3], prompt[27], atSymb[2];
   char *cwdIdx = 0xFF;
 
-  int argc, histc = 0, i, cmd, *err;
+  int argc, histc = 0, i, cmd, *err, k = 0;
 
   strncpy(username, "pushOS", 7);
   atSymb[0] = '@';
@@ -26,9 +26,10 @@ int main() {
   promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
   while (true) {
-    // getParameter(&cwdIdx, argv);
-    // if (strncpy(&argv[1], 0xFF, 1) == 0) clear(argv[1], 1);
-
+    // removeFile("temp", &err, 0x00);
+    printNumber(k);
+    k++;
+    printString("\r\n");
     // set prompt
     clear(prompt, 27);
     strncat(prompt, username, strlen(username));
@@ -38,7 +39,6 @@ int main() {
     interrupt(0x21, 0, prompt, 0, 0);
 
     interrupt(0x21, 1, command, 0, 0);
-    // setParameter(cwdIdx, argv);
     // parse dan hasil parse
     argc = commandParser(command, argv);
 
@@ -65,20 +65,6 @@ int main() {
             interrupt(0x21, 0, "Usage: ls <path/directory> or ls", 0, 0);
           }
           break;
-        case 3: // cat
-          if (argc != 2) {
-            interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
-          } else {
-            interrupt(0x21, 0x0006, "cat", 0x3001, &err, 0);
-          }
-          break;
-        case 4: // ln
-          if (argc != 3) {
-            interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
-          } else {
-            interrupt(0x21, 0x0006, "ln", 0x3001, &err, 0);
-          }
-          break;
         case 5: // cwd
           printNumber(cwdIdx);
           printString(" - ");
@@ -93,7 +79,24 @@ int main() {
             }
           }
           break;
+        case 3: // cat
+          setParameter(cwdIdx, argv);
+          if (argc != 2) {
+            interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
+          } else {
+            interrupt(0x21, 0x0006, "cat", 0x3001, &err, 0);
+          }
+          break;
+        case 4: // ln
+          setParameter(cwdIdx, argv);
+          if (argc != 3) {
+            interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
+          } else {
+            interrupt(0x21, 0x0006, "ln", 0x3001, &err, 0);
+          }
+          break;
         case 7: // cp
+          setParameter(cwdIdx, argv);
           if (argc != 3) {
             interrupt(0x21, 0, "Usage: cp <path/src> <path/dest>\r\n", 0, 0);
           } else {
@@ -101,10 +104,13 @@ int main() {
           }
           break;
         case 8: // mv
+          setParameter(cwdIdx, argv);
           break;
         case 9: // rm
+          setParameter(cwdIdx, argv);
           break;
         case 10: // mkdir
+          setParameter(cwdIdx, argv);
           break;
         default: // -1
           interrupt(0x21, 0, "Unknown command ", 0, 0);

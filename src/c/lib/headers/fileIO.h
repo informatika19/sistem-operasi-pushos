@@ -25,14 +25,15 @@ void clearSector(char *buffer, int sector);
 
 void readFile(char *buffer, char *path, int *result, char parentIndex);
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
-void deleteFile(char *buffer, char *path, int *sectors, char parentIndex);
+void removeFile(char *path, int *result, char parentIndex);
 
 int getFileIndex(char *path, char parentIndex, char *dir);
 int parsePath(char *path, char *parents, char *fname);
 
-void setParameter(int *parentIndex, char **argv);
-void getParameter(int *parentIndex, char **argv);
+void setParameter(int parentIndex, char *argv);
+void getParameter(int *parentIndex, char *argv);
 
 void clear(char *buffer, int length);
+int getSectorsNeeded(char *argv);
 
 #endif

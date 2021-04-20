@@ -1,5 +1,6 @@
 #include "headers/fileIO.h"
 #include "headers/boolean.h"
+#include "headers/math.h"
 
 void readSector(char *buffer, int sector) {
   interrupt(0x13, 0x201, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
@@ -57,113 +58,113 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
  */
 
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
-    int i, j, entry, sectorNeeded, sectorFree = 0, sectorsToUse[16], entrySectors;
-    bool alreadyExists = false, parentExists = (parentIndex == '\xFF');
-    char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
-    char fileName[FILE_NAME_LENGTH], parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
+  int i, j, entry, sectorNeeded, sectorFree = 0, sectorsToUse[16], entrySectors;
+  bool alreadyExists = false, parentExists = (parentIndex == '\xFF');
+  char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
+  char fileName[FILE_NAME_LENGTH], parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
 
-    if (*sectors > 16) {
-      *sectors = -3;
-      return;
+  if (*sectors > 16) {
+    *sectors = -3;
+    return;
+  }
+
+  sectorNeeded = *sectors;
+  readSector(map, MAP_SECTOR);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(sec, SECTORS_SECTOR);
+
+  // adjust parent index ke index tujuan
+  j = parsePath(path, parents, fileName);
+  if (j != 0) {
+    clear(path, strlen(path));
+    strncpy(path, parents[0], strlen(parents[0]));
+    strncat(path, "/", 14);
+    for (i = 1; i < j; ++i) {
+      strncat(path, parents[i], strlen(parents[i]));
+      strncat(path, "/", 2);
     }
+    parentIndex = getFileIndex(path, parentIndex, dir) & 0xFF;
+  }
+  // akibat dari path yang diberikan tidak valid
+  if (parentIndex < 0) {
+    *sectors = -4;
+    return;
+  }
 
-    sectorNeeded = *sectors;
-    readSector(map, MAP_SECTOR);
-    readSector(dir, ROOT_SECTOR);
-    readSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
-    readSector(sec, SECTORS_SECTOR);
+  // ngecek file dengan yang sama di parent index yang sama udah ada atau
+  // belum
+  i = 0;
+  while (i < 2 * SECTOR_SIZE && !alreadyExists) {
+    parentExists = !parentExists ? *(dir + i) == parentIndex : parentExists;
+    alreadyExists = *(dir + i) == parentIndex &&
+                    strncmp(dir + i + 2, fileName, FILE_NAME_LENGTH) == 0;
+    i += 0x10;
+  }
+  if (alreadyExists) {
+    *sectors = -1;
+    return;
+  }
+  if (!parentExists) {
+    *sectors = -4;
+    return;
+  }
 
-    // adjust parent index ke index tujuan
-    j = parsePath(path, parents, fileName);
-    if (j != 0) {
-      clear(path, strlen(path));
-      strncpy(path, parents[0], strlen(parents[0]));
-      strncat(path, "/", 14);
-      for (i = 1; i < j; ++i) {
-        strncat(path, parents[i], strlen(parents[i]));
-        strncat(path, "/", 2);
-      }
-      parentIndex = getFileIndex(path, parentIndex, dir) & 0xFF;
+  // nyari entri kosong di sektor files yang kosong kosong
+  entry = 0;
+  for (; *(dir + entry + 2) && entry < 2 * SECTOR_SIZE; entry += 0x10);
+  if (entry >= 2 * SECTOR_SIZE) {
+    *sectors = -2;
+    return;
+  }
+
+  // nyari sektor-sektor di map yang kosong untuk diisi file
+  // sektor yang digunakan bisa tidak kontigu
+  i = 0;
+  j = 0;
+  while (i < SECTOR_SIZE) {
+    if (*(map + i) == 0x00) {
+      sectorFree++;
+      if (j < 16) sectorsToUse[j++] = i;
     }
-    // akibat dari path yang diberikan tidak valid
-    if (parentIndex < 0) {
-      *sectors = -4;
-      return;
-    }
+    ++i;
+  }
+  if (sectorFree < sectorNeeded) {
+    *sectors = -3;
+    return;
+  }
 
-    // ngecek file dengan yang sama di parent index yang sama udah ada atau
-    // belum
-    i = 0;
-    while (i < 2 * SECTOR_SIZE && !alreadyExists) {
-      parentExists = !parentExists ? *(dir + i) == parentIndex : parentExists;
-      alreadyExists = *(dir + i) == parentIndex &&
-                      strncmp(dir + i + 2, fileName, 13) == 0;
-      i += 0x10;
-    }
-    if (alreadyExists) {
-      *sectors = -1;
-      return;
-    }
-    if (!parentExists) {
-      *sectors = -4;
-      return;
-    }
+  // isi sektornya
+  i = 0;
+  while (i < sectorNeeded) {
+    writeSector(buffer + (i * SECTOR_SIZE), sectorsToUse[i]);
+    *(map + sectorsToUse[i]) = 0xFF;
+    ++i;
+  }
 
-    // nyari entri kosong di sektor files yang kosong kosong
-    entry = 0;
-    for (; *(dir + entry + 2) && entry < 2 * SECTOR_SIZE; entry += 0x10);
-    if (entry >= 2 * SECTOR_SIZE) {
-      *sectors = -2;
-      return;
-    }
+  // isi sektor sectors (0x103)
+  // cari entri di sektor sectors yang kosong
+  entrySectors = 0;
+  for (; *(sec + (entrySectors)) && entrySectors < SECTOR_SIZE;
+        entrySectors += 0x10);
 
-    // nyari sektor-sektor di map yang kosong untuk diisi file
-    // sektor yang digunakan bisa tidak kontigu
-    i = 0;
-    j = 0;
-    while (i < SECTOR_SIZE) {
-      if (*(map + i) == 0x00) {
-        sectorFree++;
-        if (j < SECTOR_ENTRY_LENGTH) sectorsToUse[j++] = i;
-      }
-      ++i;
-    }
-    if (sectorFree < sectorNeeded) {
-      *sectors = -3;
-      return;
-    }
+  *sectors = 0;
+  for (i = 0; i < sectorNeeded; ++i, ++(*sectors))
+    *(sec + entrySectors + i) = sectorsToUse[i];
 
-    // isi sektornya
-    i = 0;
-    while (i < sectorNeeded) {
-      writeSector(buffer + (i * SECTOR_SIZE), sectorsToUse[i]);
-      *(map + sectorsToUse[i]) = 0xFF;
-      ++i;
-    }
+  // akusisi entry yang ditemukan sebelumnya
+  *(dir + entry) = parentIndex;
+  *(dir + entry + 1) = entrySectors / SECTOR_ENTRY_LENGTH;
+  strncpy(dir + entry + 2, fileName, FILE_NAME_LENGTH);
 
-    // isi sektor sectors (0x103)
-    // cari entri di sektor sectors yang kosong
-    entrySectors = 0;
-    for (; *(sec + (entrySectors)) && entrySectors < SECTOR_SIZE;
-      entrySectors += 0x10);
-
-    *sectors = 0;
-    for (i = 0; i < sectorNeeded; ++i, ++(*sectors))
-      *(sec + entrySectors + i) = sectorsToUse[i];
-
-    // akusisi entry yang ditemukan sebelumnya
-    *(dir + entry) = parentIndex;
-    *(dir + entry + 1) = entrySectors / 0x10;
-    strncpy(dir + entry + 2, fileName, FILE_NAME_LENGTH);
-
-    // tulis perubahan
-    writeSector(map, MAP_SECTOR);
-    writeSector(dir, ROOT_SECTOR);
-    writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
-    writeSector(sec, SECTORS_SECTOR);
+  // tulis perubahan
+  writeSector(map, MAP_SECTOR);
+  writeSector(dir, ROOT_SECTOR);
+  writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
+  writeSector(sec, SECTORS_SECTOR);
 }
 
-void deleteFile(char *buffer, char *path, int *sectors, char parentIndex) {
+void removeFile(char *path, int *result, char parentIndex) {
   
 }
 
@@ -253,30 +254,35 @@ int parsePath(char *path, char *parents, char *fname) {
   return div(j, FILE_NAME_LENGTH);
 }
 
-void setParameter(int *parentIndex, char **argv) {
-  char buffer[SECTOR_SIZE];
+void setParameter(int parentIndex, char *argv) {
+  char buffer[MAXIMUM_CMD_LEN * (MAXIMUM_ARGC + 1)];
   int i, *sectors;
-  *sectors = 1;
-  *(buffer) = *parentIndex;
-  for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
-    strncpy((*(buffer + (i+1) * MAXIMUM_ARGC)), (*(argv + i * MAXIMUM_ARGC)), MAXIMUM_ARGC);
+
+  *sectors = getSectorsNeeded(argv);
+  printNumber(sectors);
+  printString(" <<< sectors\r\n");
+
+  strncpy((buffer), parentIndex, 1);
+
+  for (i = 0; i < MAXIMUM_ARGC && *(argv + i * MAXIMUM_CMD_LEN) != 0; i++) {
+    strncpy((buffer + (i+1) * MAXIMUM_CMD_LEN), (argv + i * MAXIMUM_CMD_LEN), MAXIMUM_ARGC);
   }
+
   writeFile(buffer, "temp", &sectors, 0x00);
-  // printNumber(sectors);
+  printNumber(sectors);
+  printString(" <<< sectors\r\n");
 }
 
-void getParameter(int *parentIndex, char **argv) {
-  char buffer[SECTOR_SIZE], *temp, *result;
+void getParameter(int *parentIndex, char *argv) {
+  char buffer[MAXIMUM_CMD_LEN * (MAXIMUM_ARGC + 1)], *result;
   int i;
-  readFile(&buffer, "temp", &result, 0x00);
+  readFile(buffer, "temp", &result, 0x00);
   if (*result == -1) {
-    *parentIndex = 0xFF;
-    *argv[1] = 0xFF;
+    argv[1] = 0xFF;
   } else {
-    strncpy(&temp, &buffer, MAXIMUM_CMD_LEN);
-    *parentIndex = *temp;
+    *parentIndex = buffer[0];
     for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
-      strncpy((*(argv + i * MAXIMUM_ARGC)), (*(buffer + (i+1) * MAXIMUM_ARGC)), MAXIMUM_ARGC);
+      strncpy(argv[i], buffer[(i+1) * MAXIMUM_CMD_LEN], MAXIMUM_ARGC);
     }
   }
 }
@@ -286,4 +292,17 @@ void clear(char *buffer, int length) {
   for (; i < length; i++) {
     buffer[i] = 0;
   }
+}
+
+int getSectorsNeeded(char *argv) {
+  int i = 0, a, b;
+  while (i < MAXIMUM_ARGC) {
+    if (strncpy((argv + i * MAXIMUM_CMD_LEN), 0, 1) == 0) i++;
+    else break;
+  }
+  i += 2;
+  i *= MAXIMUM_CMD_LEN;
+  a = div(i, SECTOR_SIZE);
+  b = mod(i, SECTOR_SIZE);
+  return b > 0 ? a + 1 : a;
 }
