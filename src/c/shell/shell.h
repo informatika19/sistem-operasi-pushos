@@ -3,7 +3,7 @@
 
 #define HIST_SIZE           5
 
-int cmdcmp(char *cmd);
+int cmdcmp(char *argv);
 int commandParser(char *cmd, char *argument);
 void shell_cd(char *parentIndex, char *path, char *newCwdName);
 void shell_ls(char parentIndex);

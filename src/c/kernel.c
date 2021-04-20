@@ -9,7 +9,7 @@ int main() {
 
   makeInterrupt21();
 
-  executeProgram("logo", 0x3000, &success, 0x00); // segmennya dukun anjay
+  executeProgram("logo", 0x3001, &success, 0x00); // segmennya dukun anjay
 
   while (true);
 }

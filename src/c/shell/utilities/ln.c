@@ -43,7 +43,7 @@ int main() {
       i += 0x10;
     }
     if (*(dir + i + 2) != 0) {  // sektor files penuh
-      printString("sektor penuh\n");
+      printString("sektor penuh\r\n");
       goto hardLink_error;
       interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
       return;
@@ -65,6 +65,6 @@ int main() {
   }
 
 hardLink_error:
-  interrupt(0x21, 0, "Terjadi kesalahan saat membuat symbolic link\n", 0, 0);
+  interrupt(0x21, 0, "Terjadi kesalahan saat membuat symbolic link\r\n", 0, 0);
   return;
 }

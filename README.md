@@ -1,4 +1,4 @@
-# Milestone 2 Tugas Besar IF2230 Sistem Operasi
+# Milestone 3 Tugas Besar IF2230 Sistem Operasi
 ## Cara menjalankan OS
 ```sh
 $ make run

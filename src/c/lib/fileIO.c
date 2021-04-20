@@ -163,6 +163,10 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
     writeSector(sec, SECTORS_SECTOR);
 }
 
+void deleteFile(char *buffer, char *path, int *sectors, char parentIndex) {
+  
+}
+
 int getFileIndex(char *path, char parentIndex, char *dir) {
   char *entry;
   char tmpP[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH], fname[FILE_NAME_LENGTH];
@@ -249,20 +253,22 @@ int parsePath(char *path, char *parents, char *fname) {
   return div(j, FILE_NAME_LENGTH);
 }
 
-void setParameter(char *parentIndex, char **argv) {
+void setParameter(int *parentIndex, char **argv) {
   char buffer[SECTOR_SIZE];
-  int i;
+  int i, *sectors;
+  *sectors = 1;
   *(buffer) = *parentIndex;
   for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
     strncpy((*(buffer + (i+1) * MAXIMUM_ARGC)), (*(argv + i * MAXIMUM_ARGC)), MAXIMUM_ARGC);
   }
-  writeFile(buffer, "/bin/.temp", 1, 0xFF);
+  writeFile(buffer, "temp", &sectors, 0x00);
+  // printNumber(sectors);
 }
 
 void getParameter(int *parentIndex, char **argv) {
   char buffer[SECTOR_SIZE], *temp, *result;
   int i;
-  readFile(&buffer, "/bin/.temp", &result, 0xFF);
+  readFile(&buffer, "temp", &result, 0x00);
   if (*result == -1) {
     *parentIndex = 0xFF;
     *argv[1] = 0xFF;

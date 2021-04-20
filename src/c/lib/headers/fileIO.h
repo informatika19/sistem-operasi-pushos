@@ -30,8 +30,8 @@ void deleteFile(char *buffer, char *path, int *sectors, char parentIndex);
 int getFileIndex(char *path, char parentIndex, char *dir);
 int parsePath(char *path, char *parents, char *fname);
 
-void setParameter(char *parentIndex, char *argv);
-void getParameter(char *parentIndex, char *argv);
+void setParameter(int *parentIndex, char **argv);
+void getParameter(int *parentIndex, char **argv);
 
 void clear(char *buffer, int length);
 

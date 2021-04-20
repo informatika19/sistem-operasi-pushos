@@ -10,7 +10,7 @@ SHELL_C_APP_DIR=$(SHELL_C_DIR)/utilities
 TOOLS_DIR=tools
 BIN=bin
 
-KSIZE=50
+KSIZE=16
 
 SHELL_C=$(SHELL_C_DIR)/shell.c
 SHELL_OUT=$(OUT_DIR)/shell.o
@@ -62,7 +62,7 @@ $(SHELL_OUT): $(SHELL_C)
 $(LIB_ASM_OUT): $(LIB_ASM) $(OUT_DIR)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
-$(SHELLL): $(SHELL_OUT) $(LIB_C_OUT) $(LIB_ASM_OUT)
+$(SHELLL): $(SHELL_OUT) $(LIB_ASM_OUT) $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_fileIO.o 
 	ld86 -o $@ -d $^
 	python3 tools/loadfile/loadfile.py out/system.img $@
 

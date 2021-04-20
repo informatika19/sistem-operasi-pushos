@@ -1,19 +1,22 @@
 #include "shell.h"
 
-#include "../lib/lib.h"
+#include "../lib/headers/boolean.h"
+#include "../lib/headers/string.h"
+#include "../lib/headers/fileIO.h"
+#include "../lib/headers/math.h"
 
 int main() {
   char command[10 * MAXIMUM_CMD_LEN];  // kalo pointer aja takut error
   char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
 
-  char hist[HIST_SIZE][10 * 20];
+  char hist[HIST_SIZE][MAXIMUM_ARGC * MAXIMUM_CMD_LEN];
 
-  char username[11], cwdName[14], promptHead[3], prompt[27], atSymb[2];
+  char username[7], cwdName[FILE_NAME_LENGTH], promptHead[3], prompt[27], atSymb[2];
   char *cwdIdx = 0xFF;
 
   int argc, histc = 0, i, cmd, *err;
 
-  strncpy(username, "pushOS", 6);
+  strncpy(username, "pushOS", 7);
   atSymb[0] = '@';
   atSymb[1] = 0;
   cwdName[0] = '/';
@@ -22,10 +25,9 @@ int main() {
   promptHead[1] = ' ';
   promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
-
   while (true) {
-    getParameter(&cwdIdx, argv);
-    if (strncpy(&argv[1], 0xFF, 1) == 0) clear(argv[1], 1);
+    // getParameter(&cwdIdx, argv);
+    // if (strncpy(&argv[1], 0xFF, 1) == 0) clear(argv[1], 1);
 
     // set prompt
     clear(prompt, 27);
@@ -36,15 +38,16 @@ int main() {
     interrupt(0x21, 0, prompt, 0, 0);
 
     interrupt(0x21, 1, command, 0, 0);
+    // setParameter(cwdIdx, argv);
     // parse dan hasil parse
     argc = commandParser(command, argv);
 
     if (argc < 0) {
       // printString("gamasuk euy\r\n")
-      printString("\r");
+      printString("\r\n");
       continue;
     } else {
-      setParameter(cwdIdx, argv);
+      interrupt(0x21, 0, "\r\n", 0, 0);
       cmd = cmdcmp(argv[0]);
       switch(cmd) {
         case 1: // cd
@@ -55,20 +58,26 @@ int main() {
           }
           break;
         case 2: // ls
-          shell_ls(cwdIdx);
+          if (argc == 2) {
+            shell_ls(cwdIdx, argv[1]);
+          } else if (argc == 1) {
+            shell_ls(cwdIdx, 0);
+          } else {
+            interrupt(0x21, 0, "Usage: ls <path/directory> or ls", 0, 0);
+          }
           break;
         case 3: // cat
           if (argc != 2) {
             interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "cat", 0x3000, &err, 0);
+            interrupt(0x21, 0x0006, "cat", 0x3001, &err, 0);
           }
           break;
         case 4: // ln
           if (argc != 3) {
             interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "ln", 0x3000, &err, 0);
+            interrupt(0x21, 0x0006, "ln", 0x3001, &err, 0);
           }
           break;
         case 5: // cwd
@@ -89,7 +98,7 @@ int main() {
           if (argc != 3) {
             interrupt(0x21, 0, "Usage: cp <path/src> <path/dest>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "cp", 0x3000, &err, 0);
+            interrupt(0x21, 0x0006, "cp", 0x3001, &err, 0);
           }
           break;
         case 8: // mv
@@ -103,6 +112,7 @@ int main() {
           interrupt(0x21, 0, argv[0], 0, 0);
           interrupt(0x21, 0, "\r\n", 0, 0);
       }
+      interrupt(0x21, 0, "\r", 0, 0);
     }
 
     // HISTORY
@@ -116,17 +126,17 @@ int main() {
   }
 }
 
-int cmdcmp(char *cmd) {
-  if (strncmp("cd", *cmd, MAXIMUM_CMD_LEN) == 0) return 1;
-  if (strncmp("ls", *cmd, MAXIMUM_CMD_LEN) == 0) return 2;
-  if (strncmp("cat", *cmd, MAXIMUM_CMD_LEN) == 0) return 3;
-  if (strncmp("ln", *cmd, MAXIMUM_CMD_LEN) == 0) return 4;
-  if (strncmp("cwd", *cmd, MAXIMUM_CMD_LEN) == 0) return 5;
-  if (strncmp("history", *cmd, MAXIMUM_CMD_LEN) == 0) return 6;
-  if (strncmp("cp", *cmd, MAXIMUM_CMD_LEN) == 0) return 7;
-  if (strncmp("mv", *cmd, MAXIMUM_CMD_LEN) == 0) return 8;
-  if (strncmp("rm", *cmd, MAXIMUM_CMD_LEN) == 0) return 9;
-  if (strncmp("mkdir", *cmd, MAXIMUM_CMD_LEN) == 0) return 10;
+int cmdcmp(char *argv) {
+  if (strncmp("cd", argv, MAXIMUM_CMD_LEN) == 0) return 1;
+  if (strncmp("ls", argv, MAXIMUM_CMD_LEN) == 0) return 2;
+  if (strncmp("cat", argv, MAXIMUM_CMD_LEN) == 0) return 3;
+  if (strncmp("ln", argv, MAXIMUM_CMD_LEN) == 0) return 4;
+  if (strncmp("cwd", argv, MAXIMUM_CMD_LEN) == 0) return 5;
+  if (strncmp("history", argv, MAXIMUM_CMD_LEN) == 0) return 6;
+  if (strncmp("cp", argv, MAXIMUM_CMD_LEN) == 0) return 7;
+  if (strncmp("mv", argv, MAXIMUM_CMD_LEN) == 0) return 8;
+  if (strncmp("rm", argv, MAXIMUM_CMD_LEN) == 0) return 9;
+  if (strncmp("mkdir", argv, MAXIMUM_CMD_LEN) == 0) return 10;
   return -1;
 }
 
@@ -136,7 +146,7 @@ int commandParser(char *cmd, char *argument) {
 
   i = 0, j = 0;
   for (; *cmd == ' '; cmd++);
-  stop = cmd == '\n';
+  stop = strcmp(cmd, "\0") == 0; // hanya enter
   while (*cmd != '\0' && !stop) {
     stop = i >= MAXIMUM_CMD_LEN;
     switch (*cmd) {
@@ -190,31 +200,60 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
           strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, 14);
       } else {
           interrupt(0x21, 0, path, 0, 0);
-          interrupt(0x21, 0, " bukan direktori.\r\n", 0, 0);
+          interrupt(0x21, 0, " is not a directory.\r\n", 0, 0);
       }
     } else {
-      interrupt(0x21, 0, "Direktori ", 0, 0);
+      interrupt(0x21, 0, "Directory ", 0, 0);
       interrupt(0x21, 0, path, 0, 0);
-      interrupt(0x21, 0, " tidak ditemukan.\r\n", 0, 0);
+      interrupt(0x21, 0, " not found.\r\n", 0, 0);
     }
   }
   return;
 }
 
-// TODO: ls ke directory lain
-void shell_ls(char parentIndex) {
-  int i = 0;
+void shell_ls(char parentIndex, char* folder) {
+  int i, j;
+  bool found = false;
   char dir[2 * SECTOR_SIZE];
 
   interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
   interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
 
-  while (i < 2 * SECTOR_SIZE) {
-    if (*(dir + i) == parentIndex && *(dir + i + 2) != 0) {
-        interrupt(0x21, 0, dir + i + 2, 0, 0);
-        if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
-        interrupt(0x21, 0, "\r\n", 0, 0);
+  if (strncmp(&folder, "", 1) == 0) {
+    i = 0;
+    while (i < 2 * SECTOR_SIZE) {
+      if (*(dir + i) == parentIndex && *(dir + i + 2) != 0) {
+          interrupt(0x21, 0, dir + i + 2, 0, 0);
+          if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
+          interrupt(0x21, 0, "\r\n", 0, 0);
+      }
+      i += 16;
     }
-    i += 16;
+  } else {
+    for (i = 0; i < FILE_ENTRY_TOTAL; i++) {
+      if (dir[FILE_ENTRY_LENGTH * i] == parentIndex
+          && dir[FILE_ENTRY_LENGTH * i + 2] != 0
+          && dir[FILE_ENTRY_LENGTH * i + 1] == '\xFF'
+          && strncmp(dir[FILE_ENTRY_LENGTH * i + 2], *folder, FILE_NAME_LENGTH) == 0) { 
+        found = true;
+        j = i;
+        break;
+      }
+    }
+    if (!found) {
+      interrupt(0x21, 0, "There is no folder named ", 0, 0);
+      interrupt(0x21, 0, folder, 0, 0);
+      interrupt(0x21, 0, " in this directory\r\n", 0, 0);
+      return;
+    } else {
+      while (i < 2 * SECTOR_SIZE) {
+      if (*(dir + i) == j && *(dir + i + 2) != 0) {
+          interrupt(0x21, 0, dir + i + 2, 0, 0);
+          if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
+          interrupt(0x21, 0, "\r\n", 0, 0);
+        }
+      i += 16;
+      }
+    }
   }
 }

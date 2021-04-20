@@ -16,6 +16,6 @@ int main() {
     interrupt(0x21, 0, "Terjadi kesalahan saat membaca berkas ", 0, 0);
     interrupt(0x21, 0, path, 0, 0);
   }
-  interrupt(0x21, 0, "\n", 0, 0);
+  interrupt(0x21, 0, "\r\n", 0, 0);
   interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
 }

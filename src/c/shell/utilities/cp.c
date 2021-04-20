@@ -37,6 +37,6 @@ int main() {
   return;
 
 cp_error:
-  interrupt(0x21, 0, "Terjadi kesalahan saat membuat symbolic link\n", 0, 0);
+  interrupt(0x21, 0, "Terjadi kesalahan saat membuat symbolic link\r\n", 0, 0);
   return;
 }
