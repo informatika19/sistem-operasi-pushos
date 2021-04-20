@@ -43,7 +43,6 @@ int main() {
     argc = commandParser(command, argv);
 
     if (argc < 0) {
-      // printString("gamasuk euy\r\n")
       printString("\r\n");
       continue;
     } else {

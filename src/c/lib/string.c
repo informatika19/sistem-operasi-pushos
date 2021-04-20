@@ -67,7 +67,10 @@ void readString(char *string) {
         if (i > 0) {
           i--;
           interrupt(0x10, 0x0E00 + 0x8, 0, 0, 0);
+          i++;
           interrupt(0x10, 0x0E00 + 0x0, 0, 0, 0);
+          i--;
+          interrupt(0x10, 0x0E00 + 0x8, 0, 0, 0);
         }
         break;
       default:
