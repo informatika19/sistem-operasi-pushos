@@ -11,10 +11,10 @@ int main() {
 
   char hist[HIST_SIZE][MAXIMUM_ARGC * MAXIMUM_CMD_LEN];
 
-  char username[7], cwdName[FILE_NAME_LENGTH], promptHead[3], prompt[27], atSymb[2];
+  char username[7], cwdName[FILE_NAME_LENGTH], promptHead[3], prompt[23], atSymb[2];
   char *cwdIdx = 0xFF;
 
-  int argc, histc = 0, i, cmd, *err, k = 0;
+  int argc, histc = 0, i, cmd, success;
 
   strncpy(username, "pushOS", 7);
   atSymb[0] = '@';
@@ -25,13 +25,19 @@ int main() {
   promptHead[1] = ' ';
   promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
+  /*
+  getParameter(&cwdIdx, cwdName, argv, &success);
+  if (success == 1) {
+    clear(argv, MAXIMUM_ARGC * MAXIMUM_CMD_LEN);
+  }
+  */
+
   while (true) {
-    // removeFile("temp", &err, 0x00);
-    printNumber(k);
-    k++;
+    // removeFile("temp", &success, 0x00);
     printString("\r\n");
+  
     // set prompt
-    clear(prompt, 27);
+    clear(prompt, 23);
     strncat(prompt, username, strlen(username));
     strncat(prompt, atSymb, 1);
     strncat(prompt, cwdName, strlen(cwdName));
@@ -43,7 +49,6 @@ int main() {
     argc = commandParser(command, argv);
 
     if (argc < 0) {
-      printString("\r\n");
       continue;
     } else {
       interrupt(0x21, 0, "\r\n", 0, 0);
@@ -80,37 +85,37 @@ int main() {
           }
           break;
         case 3: // cat
-          setParameter(cwdIdx, argv);
-          if (argc != 2) {
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 2 || !success) {
             interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "cat", 0x3001, &err, 0);
+            interrupt(0x21, 0x0006, "cat", 0x3001, &success, 0);
           }
           break;
         case 4: // ln
-          setParameter(cwdIdx, argv);
-          if (argc != 3) {
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 3 || !success) {
             interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "ln", 0x3001, &err, 0);
+            interrupt(0x21, 0x0006, "ln", 0x3001, &success, 0);
           }
           break;
         case 7: // cp
-          setParameter(cwdIdx, argv);
-          if (argc != 3) {
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 3 || !success) {
             interrupt(0x21, 0, "Usage: cp <path/src> <path/dest>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "cp", 0x3001, &err, 0);
+            interrupt(0x21, 0x0006, "cp", 0x3001, &success, 0);
           }
           break;
         case 8: // mv
-          setParameter(cwdIdx, argv);
+          setParameter(cwdIdx, cwdName, argv, &success);
           break;
         case 9: // rm
-          setParameter(cwdIdx, argv);
+          setParameter(cwdIdx, cwdName, argv, &success);
           break;
         case 10: // mkdir
-          setParameter(cwdIdx, argv);
+          setParameter(cwdIdx, cwdName, argv, &success);
           break;
         default: // -1
           interrupt(0x21, 0, "Unknown command ", 0, 0);
@@ -202,7 +207,7 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
           strncpy(newCwdName, "/", 14);
       } else if (isDir) {
           *parentIndex = tmpPI;
-          strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, 14);
+          strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, FILE_NAME_LENGTH);
       } else {
           interrupt(0x21, 0, path, 0, 0);
           interrupt(0x21, 0, " is not a directory.\r\n", 0, 0);

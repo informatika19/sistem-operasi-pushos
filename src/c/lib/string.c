@@ -60,9 +60,8 @@ void readString(char *string) {
     switch (key) {
       case 0xD:
         string[i] = 0x0;
-        printString("\r\n");
+        printString("\r\n\0");
         return;
-        // break;
       case 0x8:
         if (i > 0) {
           i--;
@@ -96,4 +95,36 @@ void printNumber(int number) {
     printNumber(div(number, 10));
     printNumber(mod(number, 10));
   }
+}
+
+void int2str (char* string, int number) {
+  char s[6];
+
+  if (number < 0) {
+    strncat(string, "-", 1);
+    number *= -1;
+  }
+
+  if (number < 10) {
+    s[0] = number + '0';
+    s[1] = 0;
+    strncat(string, s, 1);
+  } else {
+    int2str(string, div(number, 10));
+    int2str(string, mod(number, 10));
+  }
+}
+
+int str2int (char* string) {
+  // TODO: handle negatives
+  int i, res;
+  char s[6];
+
+  strncpy(s, string, 6);
+  res = s[0] && 0;
+  for (i = 1; i < 6 && s[i] != 0; i++) {
+    res = res * 10 + s[i] && 0;
+  }
+
+  return res;
 }
