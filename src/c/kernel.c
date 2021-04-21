@@ -9,7 +9,7 @@ int main() {
 
   makeInterrupt21();
 
-  executeProgram("logo", 0x3001, &success, 0x00); // segmennya dukun anjay
+  executeProgram("logo", 0x3000, &success, 0x00); // segmennya dukun anjay
 
   while (true);
 }
@@ -52,7 +52,6 @@ void executeProgram(char *filename, int segment, int *success, char parentIndex)
   // Buka file dengan readFile
   readFile(&fileBuffer, filename, &isSuccess, parentIndex);
   // If success, salin dengan putInMemory
-  printNumber(isSuccess);
   if (isSuccess) {
     // launchProgram
     int i = 0;

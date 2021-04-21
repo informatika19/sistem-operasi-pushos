@@ -62,7 +62,7 @@ $(SHELL_OUT): $(SHELL_C)
 $(LIB_ASM_OUT): $(LIB_ASM) $(OUT_DIR)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
-$(SHELLL): $(SHELL_OUT) $(LIB_ASM_OUT) $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_io.o
+$(SHELLL): $(SHELL_OUT) $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_io.o $(LIB_ASM_OUT)
 	ld86 -o $@ -d $^
 	python3 tools/loadfile/loadfile.py out/system.img $@
 

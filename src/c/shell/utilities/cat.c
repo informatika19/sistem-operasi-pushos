@@ -1,5 +1,5 @@
 #include "headers/cat.h"
-#include "../../lib/headers/fileIO.h"
+#include "../../lib/headers/io.h"
 
 int main() {
   int cwdIdx, success;

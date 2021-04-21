@@ -1,9 +1,8 @@
 #include "headers/logo.h"
 #include "../../lib/headers/string.h"
-#include "../../lib/headers/fileIO.h"
 
 int main() {
-  int *success;
+  int success;
   interrupt(0x10, 0x0013, 0, 0, 0); // set video mode
   printLogoGrafik();
   interrupt(0x15, 0x8600, 0, 4, 0); // sleep
@@ -11,8 +10,9 @@ int main() {
   printLogoASCII();
   printString("press enter to continue...");
   readString(0);
+  printString("\r\n");
   interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
-  interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
+  interrupt(0x21, 0x0006, "shell", 0x3000, &success);
 }
 
 void printLogoGrafik() {

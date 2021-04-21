@@ -11,19 +11,30 @@ int main() {
 
   char hist[HIST_SIZE][10 * 20];
 
-  char username[7], cwdName[14], promptHead[3], prompt[23], atSymb[2];
-  char *cwdIdx = 0xFF;
+  char username[7], cwdName[14];
+  // char promptHead[3], prompt[23], atSymb[2];
+  char cwdIdx = 0xFF;
 
   int argc, histc = 0, i, cmd, success;
+  // interrupt(0x21, 0, "SHELLELELELLELE\r\n", 0, 0);
+  clear(argv, 200);
+  clear(hist, HIST_SIZE * 200);
+  clear(username, 7);
+  clear(cwdName, 14);
+  // clear(promptHead, 3);
+  // clear(prompt, 23);
+  // clear(atSymb, 2);
+
+  // interrupt(0x21, 0, "\r\n", 0, 0);
 
   strncpy(username, "pushOS", 7);
-  atSymb[0] = '@';
-  atSymb[1] = 0;
+  // atSymb[0] = '@';
+  // atSymb[1] = 0;
   cwdName[0] = '/';
   cwdName[1] = 0;
-  promptHead[0] = '>';
-  promptHead[1] = ' ';
-  promptHead[2] = 0;  // default prompt: "pushOS@/> "
+  // promptHead[0] = '>';
+  // promptHead[1] = ' ';
+  // promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
   /*
   getParameter(&cwdIdx, cwdName, argv, &success);
@@ -37,16 +48,22 @@ int main() {
     interrupt(0x21, 0, "\r\n", 0, 0);
   
     // set prompt
-    clear(prompt, 23);
-    strncat(prompt, username, strlen(username));
-    strncat(prompt, atSymb, 1);
-    strncat(prompt, cwdName, strlen(cwdName));
-    strncat(prompt, promptHead, 2);
-    interrupt(0x21, 0, prompt, 0, 0);
+    // clear(prompt, 23);
+    printString(username);
+    printString("@");
+    printString(cwdName);
+    printString("> ");
+    // strncat(prompt, username, strlen(username));
+    // strncat(prompt, atSymb, 1);
+    // strncat(prompt, cwdName, strlen(cwdName));
+    // strncat(prompt, promptHead, 3);
+    // interrupt(0x21, 0, prompt, 0, 0);
+    
+    clear(command, 200);
+    clear(argv, 10 * 20);
 
     interrupt(0x21, 1, command, 0, 0);
     // parse dan hasil parse
-    clear(argv, 10 * 20);
     argc = commandParser(command, argv);
 
     if (argc < 0) {
@@ -90,7 +107,7 @@ int main() {
           if (argc != 2 || !success) {
             interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "cat", 0x3001, &success, 0);
+            interrupt(0x21, 0x0006, "cat", 0x3001, &success);
           }
           break;
         case 4: // ln
@@ -98,7 +115,7 @@ int main() {
           if (argc != 3 || !success) {
             interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "ln", 0x3001, &success, 0);
+            interrupt(0x21, 0x0006, "ln", 0x3001, &success);
           }
           break;
         case 7: // cp
@@ -106,7 +123,7 @@ int main() {
           if (argc != 3 || !success) {
             interrupt(0x21, 0, "Usage: cp <path/src> <path/dest>\r\n", 0, 0);
           } else {
-            interrupt(0x21, 0x0006, "cp", 0x3001, &success, 0);
+            interrupt(0x21, 0x0006, "cp", 0x3001, &success);
           }
           break;
         case 8: // mv
@@ -135,6 +152,7 @@ int main() {
     histc++;
     interrupt(0x21, 0, "\r", 0, 0);
   }
+
 }
 
 int cmdcmp(char *argv) {
@@ -190,8 +208,8 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
 
   if (strncmp(path, ".", 20)) {
     if (strncmp(path, "/", 20) != 0) {
-      interrupt(0x21, 0x0002, dir, 101, 0);  // readSector
-      interrupt(0x21, 0x0002, dir + 512, 102, 0);
+      interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
+      interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
 
       test = getFileIndex(path, *parentIndex, dir);
       tmpPI = test & 0xFF;
@@ -229,8 +247,8 @@ void shell_ls(char parentIndex, char* folder) {
   bool found = false;
   char dir[2 * 512];
 
-  interrupt(0x21, 0x0002, dir, 101, 0);  // readSector
-  interrupt(0x21, 0x0002, dir + 512, 102, 0);
+  interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
+  interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
 
   if (strncmp(&folder, "", 1) == 0) {
     i = 0;

@@ -1,16 +1,16 @@
 #include "headers/cp.h"
-#include "../../lib/headers/fileIO.h"
+#include "../../lib/headers/io.h"
 
 // TODO: cek yang mau di-link file apa dir
 int main() {
   char *resourcePath, *destinationPath;
-  int *success, *cwdIdx;
+  int success, *cwdIdx;
   char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
-  char buf[16 * SECTOR_SIZE];
-  char dir[2 * SECTOR_SIZE];
+  char buf[16 * SECTOR_SIZE], dir[2 * SECTOR_SIZE];
+  char cwdName[FILE_NAME_LENGTH];
   int res = 0;
 
-  getParameter(&cwdIdx, argv);
+  getParameter(&cwdIdx, cwdName, argv, &success);
   strncpy(&resourcePath, &argv[1], MAXIMUM_CMD_LEN);
   strncpy(&destinationPath, &argv[2], MAXIMUM_CMD_LEN);
 
