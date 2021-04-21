@@ -10,7 +10,11 @@ void writeSector(char *buffer, int sector) {
   interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
-void clearSector(int sector) {}
+void clearSector(int sector) {
+  char buffer[SECTOR_SIZE];
+  clear(buffer, SECTOR_SIZE);
+  writeSector(buffer, sector);
+}
 
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
   int i, test;
@@ -167,7 +171,79 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   writeSector(sec, SECTORS_SECTOR);
 }
 
-void removeFile(char *path, int *result, char parentIndex) {}
+/** @param result
+ * -1 file tidak ada
+ * -2 path tidak valid
+ */
+void removeFile(char *path, int *result, char parentIndex) {
+  int i, j, sectorsUsed[16], s;
+  bool exists = false, parentExists = (parentIndex == '\xFF');
+  char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
+  char fileName[FILE_NAME_LENGTH], parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
+  
+  readSector(map, MAP_SECTOR);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(sec, SECTORS_SECTOR);
+
+  // adjust parent index ke index tujuan
+  j = parsePath(path, parents, fileName);
+  if (j != 0) {
+    clear(path, strlen(path));
+    strncpy(path, parents[0], strlen(parents[0]));
+    strncat(path, "/", 14);
+    for (i = 1; i < j; ++i) {
+      strncat(path, parents[i], strlen(parents[i]));
+      strncat(path, "/", 2);
+    }
+    parentIndex = getFileIndex(path, parentIndex, dir) & 0xFF;
+  }
+  // akibat dari path yang diberikan tidak valid
+  if (parentIndex < 0) {
+    *result = -2;
+    return;
+  }
+
+  // ngecek filenya ada atau ga
+  i = 0;
+  while (i < 2 * SECTOR_SIZE && !exists) {
+    parentExists = !parentExists ? *(dir + i) == parentIndex : parentExists;
+    strncpy(s, (dir + i + 1), 1);
+    exists = *(dir + i) == parentIndex &&
+                    strncmp(dir + i + 2, fileName, FILE_NAME_LENGTH) == 0;
+    i += 0x10;
+  }
+  if (!exists) {
+    *result = -1;
+    return;
+  }
+  if (!parentExists) {
+    *result = -2;
+    return;
+  }
+
+  i = 0;
+  while (i < SECTOR_ENTRY_LENGTH && (sec + s * SECTOR_ENTRY_LENGTH + i) != 0) {
+    strncpy(sectorsUsed + i, sec + s * SECTOR_ENTRY_LENGTH + i, 1);
+    strncpy(sec + s * SECTOR_ENTRY_LENGTH + i, 0, 1);
+    i++;
+  }
+  
+  i = 0;
+  while (sectorsUsed + i != 0) {
+    strncpy(map + (*sectorsUsed + i), 0, 1);
+    clearSector(*sectorsUsed + i);
+    i++;
+  }
+
+  *result = 0;
+
+  writeSector(map, MAP_SECTOR);
+  writeSector(dir, ROOT_SECTOR);
+  writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
+  writeSector(sec, SECTORS_SECTOR);
+}
+
 
 int getFileIndex(char *path, char parentIndex, char *dir) {
   char *entry;
