@@ -166,14 +166,15 @@ int parsePath(char *path, char *parents, char *fname) {
 }
 
 void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
-  char buffer[MAXIMUM_CMD_LEN * (MAXIMUM_ARGC + 1)], pi[6];
+  char buffer[SECTOR_SIZE], pi[6];
   int i, sectors;
 
   clear(pi, 6);
-  clear(buffer, MAXIMUM_CMD_LEN * (MAXIMUM_ARGC + 1));
+  clear(buffer, SECTOR_SIZE);
   sectors = getSectorsNeeded(argv);
   int2str(&pi, parentIndex);
-  // printString(pi); //x
+  printString(pi); //x
+  printString(cwdName); //x
   // printString(" <<< pi\r\n"); //x
   strncpy(buffer, pi, 6);
   strncpy(buffer+6, cwdName, FILE_NAME_LENGTH);
@@ -193,7 +194,7 @@ void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
 }
 
 void getParameter(int *parentIndex, char *cwdName, char *argv, int *success) {
-  char buffer[MAXIMUM_CMD_LEN * (MAXIMUM_ARGC + 1)];
+  char buffer[SECTOR_SIZE];
   int i, result;
 
   interrupt(0x21, 0x0004, buffer, "temp", &result); // readFile

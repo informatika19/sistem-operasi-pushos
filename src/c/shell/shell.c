@@ -21,20 +21,10 @@ int main() {
   clear(hist, HIST_SIZE * 200);
   clear(username, 7);
   clear(cwdName, 14);
-  // clear(promptHead, 3);
-  // clear(prompt, 23);
-  // clear(atSymb, 2);
-
-  // interrupt(0x21, 0, "\r\n", 0, 0);
 
   strncpy(username, "pushOS", 7);
-  // atSymb[0] = '@';
-  // atSymb[1] = 0;
   cwdName[0] = '/';
   cwdName[1] = 0;
-  // promptHead[0] = '>';
-  // promptHead[1] = ' ';
-  // promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
   /*
   getParameter(&cwdIdx, cwdName, argv, &success);
@@ -45,19 +35,11 @@ int main() {
 
   while (true) {
     // removeFile("temp", &success, 0x00);
-    interrupt(0x21, 0, "\r\n", 0, 0);
-  
-    // set prompt
-    // clear(prompt, 23);
-    printString(username);
-    printString("@");
-    printString(cwdName);
-    printString("> ");
-    // strncat(prompt, username, strlen(username));
-    // strncat(prompt, atSymb, 1);
-    // strncat(prompt, cwdName, strlen(cwdName));
-    // strncat(prompt, promptHead, 3);
-    // interrupt(0x21, 0, prompt, 0, 0);
+
+    interrupt(0x21, 0, username, 0, 0);
+    interrupt(0x21, 0, "@", 0, 0);
+    interrupt(0x21, 0, cwdName, 0, 0);
+    interrupt(0x21, 0, "> ", 0, 0);
     
     clear(command, 200);
     clear(argv, 10 * 20);
@@ -66,10 +48,10 @@ int main() {
     // parse dan hasil parse
     argc = commandParser(command, argv);
 
+    interrupt(0x21, 0, "\r\n", 0, 0);
     if (argc < 0) {
       continue;
     } else {
-      interrupt(0x21, 0, "\r\n", 0, 0);
       cmd = cmdcmp(argv[0]);
       switch(cmd) {
         case 1: // cd
@@ -140,7 +122,7 @@ int main() {
           interrupt(0x21, 0, argv[0], 0, 0);
           interrupt(0x21, 0, "\r\n", 0, 0);
       }
-      interrupt(0x21, 0, "\r", 0, 0);
+      interrupt(0x21, 0, "\r\n", 0, 0);
     }
 
     // HISTORY
@@ -236,7 +218,6 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
       interrupt(0x21, 0, "Directory ", 0, 0);
       interrupt(0x21, 0, path, 0, 0);
       interrupt(0x21, 0, " not found.", 0, 0);
-      // interrupt(0x21, 0, "\r\n", 0, 0);
     }
   }
   return;
