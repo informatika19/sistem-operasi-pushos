@@ -7,6 +7,8 @@ int main() {
   char buf[16 * SECTOR_SIZE], path[MAXIMUM_CMD_LEN];
   int res = 0;
 
+  printString("MASUK CAT\r\n"); //x
+
   getParameter(&cwdIdx, cwdName, argv, &success);
   printNumber(cwdIdx);  //x
   printString(" <<< cwdIdx\r\n");  //x

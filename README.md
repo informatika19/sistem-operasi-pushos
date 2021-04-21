@@ -1,7 +1,7 @@
 # Milestone 3 Tugas Besar IF2230 Sistem Operasi
 ## Cara menjalankan OS
 ```sh
-$ make run
+$ make clean run
 ```
 Tested on ubuntu.
 ## Dependensi
@@ -18,6 +18,8 @@ Tested on ubuntu.
 * [MILESTONE 2](docs/MILESTONE2.md)
 * [MILESTONE 3](docs/MILESTONE3.md)
 ## Anggota Kelompok PushOS
-* 13519116 Jeane Mikha Erwansyah
-* 13519131 Hera Shafira
-* 13519139 I Gede Govindabhakta
+NIM | Nama
+--|--|
+13519116 | Jeane Mikha Erwansyah
+13519131 | Hera Shafira
+13519139 | I Gede Govindabhakta

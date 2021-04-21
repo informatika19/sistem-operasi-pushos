@@ -46,6 +46,7 @@ int main() {
 
     interrupt(0x21, 1, command, 0, 0);
     // parse dan hasil parse
+    clear(argv, MAXIMUM_ARGC * MAXIMUM_CMD_LEN);
     argc = commandParser(command, argv);
 
     if (argc < 0) {
@@ -85,6 +86,7 @@ int main() {
           }
           break;
         case 3: // cat
+          printString("---\r\n"); //x
           setParameter(cwdIdx, cwdName, argv, &success);
           if (argc != 2 || !success) {
             interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);

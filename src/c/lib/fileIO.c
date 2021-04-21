@@ -154,14 +154,14 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   *sectors = 0;
   for (i = 0; i < sectorNeeded; ++i, ++(*sectors)) {
     *(sec + entrySectors + i) = sectorsToUse[i];
-    printString("NOOOOOOOOOOOOOOOOOOO\r\n");
+    printString("NOOOOOOOOOOOOOOOOOOO\r\n"); //x
   }
 
   // akusisi entry yang ditemukan sebelumnya
   *(dir + entry) = parentIndex;
   *(dir + entry + 1) = entrySectors / SECTOR_ENTRY_LENGTH;
   strncpy(dir + entry + 2, fileName, FILE_NAME_LENGTH);
-  
+
   // tulis perubahan
   writeSector(map, MAP_SECTOR);
   writeSector(dir, ROOT_SECTOR);
@@ -264,15 +264,13 @@ void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
   clear(pi, 6);
   clear(buffer, MAXIMUM_CMD_LEN * (MAXIMUM_ARGC + 1));
   sectors = getSectorsNeeded(argv);
-  printString("---\r\n"); //x
   int2str(&pi, parentIndex);
-  printString("---\r\n"); //x
-  printString(pi); //x
-  printString(" <<< pi\r\n"); //x
+  // printString(pi); //x
+  // printString(" <<< pi\r\n"); //x
   strncpy(buffer, pi, 6);
   strncpy(buffer, cwdName, FILE_NAME_LENGTH);
-  printString(cwdName); //x
-  printString(" <<< cwdName\r\n"); //x
+  // printString(cwdName); //x
+  // printString(" <<< cwdName\r\n"); //x
 
   for (i = 0; i < MAXIMUM_ARGC && *(argv + i * MAXIMUM_CMD_LEN) != 0; i++) {
     strncpy((buffer + (i+1) * MAXIMUM_CMD_LEN),

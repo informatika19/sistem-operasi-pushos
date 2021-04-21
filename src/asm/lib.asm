@@ -5,7 +5,7 @@ _interrupt:
 	push bp
 	mov bp,sp
 	mov ax,[bp+4]	;get the interrupt number in AL
-	push ds		;use self-modifying code to call the right interrupt
+	push ds			;use self-modifying code to call the right interrupt
 	mov bx,cs
 	mov ds,bx
 	mov si,intr
@@ -18,6 +18,6 @@ _interrupt:
 
 intr:	int 0x00	;call the interrupt (00 will be changed above)
 
-	mov ah,0	;we only want AL returned
+	mov ah,0		;we only want AL returned
 	pop bp
 	ret
