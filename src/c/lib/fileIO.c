@@ -19,6 +19,14 @@ void clear(char *buffer, int length) {
   }
 }
 
+void readFile(char *buffer, char *path, int *result, char parentIndex) {
+  interrupt(0x21, (parentIndex << 8) + 0x04, buffer, path, result); // readFile
+}
+
+void writeFile(char *buffer, char *path, int *sections, char parentIndex) {
+  interrupt(0x21, (parentIndex << 8) + 0x05, buffer, path, sections); // writeFile
+}
+
 /**
  * @param result
  * -1 file tidak ada
@@ -199,7 +207,8 @@ void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
     strncpy((buffer + (i+1) * MAXIMUM_CMD_LEN),
             (argv + i * MAXIMUM_CMD_LEN), MAXIMUM_ARGC);
   }
-  interrupt(0x21, 0x0005, buffer, "temp", &sectors);
+
+  interrupt(0x21, 0x0005, buffer, "temp", &sectors); // writeFile
   printNumber(sectors); //x
   printString(" <<< sectors\r\n"); //x
 

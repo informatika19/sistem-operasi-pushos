@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "io.h"
+#include "filesystem.h"
 
 int main() {
   char buffer[512];

@@ -20,11 +20,12 @@ LIB_ASM_OUT=$(OUT_DIR)/lib_asm.o
 
 KERNEL_C=$(C_DIR)/kernel.c
 KERNEL_OUT=$(OUT_DIR)/kernel.o
-KERNEL_IO=$(C_DIR)/io.c
-KERNEL_IO_OUT=$(OUT_DIR)/io.o
 KERNEL=$(OUT_DIR)/kernel
 KERNEL_ASM=$(ASM_DIR)/kernel.asm
 KERNEL_ASM_OUT=$(OUT_DIR)/kernel_asm.o
+
+KERNEL_LIB_C=io filesystem
+KERNEL_LIB_C_OUT=$(patsubst %, $(OUT_DIR)/kernel_%.o, $(KERNEL_LIB_C))
 
 LIB_C=math string fileIO folderIO
 LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
@@ -53,6 +54,12 @@ $(BIN):
 	mkdir $(BIN)
 
 $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
+	bcc -ansi -c -o $@ $<
+
+$(OUT_DIR)/kernel_io.o: $(C_DIR)/io.c
+	bcc -ansi -c -o $@ $<
+
+$(OUT_DIR)/kernel_filesystem.o: $(C_DIR)/filesystem.c
 	bcc -ansi -c -o $@ $<
 
 $(OUT_DIR)/shell_%.o: $(SHELL_C_APP_DIR)/%.c
@@ -96,13 +103,10 @@ $(BOOTLOADER): $(BOOTLOADER_ASM)
 $(KERNEL_OUT): $(KERNEL_C) $(OUT_DIR)
 	bcc -ansi -c -o $@ $<
 
-$(KERNEL_IO_OUT): $(KERNEL_IO) $(OUT_DIR)
-	bcc -ansi -c -o $@ $<
-
 $(KERNEL_ASM_OUT): $(KERNEL_ASM) $(OUT_DIR)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
-$(KERNEL): $(KERNEL_OUT) $(KERNEL_IO_OUT) $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_string.o $(KERNEL_ASM_OUT)
+$(KERNEL): $(KERNEL_OUT) $(KERNEL_LIB_C_OUT) $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_string.o $(KERNEL_ASM_OUT)
 	ld86 -o $@ -d $^
 
 $(LANG):
