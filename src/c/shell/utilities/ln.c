@@ -1,19 +1,20 @@
 #include "headers/ln.h"
 #include "../../lib/headers/string.h"
-#include "../../lib/headers/fileIO.h"
+#include "../../lib/headers/io.h"
 
 // TODO: cek yang mau di-link file apa dir
 int main() { 
+  char cwdName[FILE_NAME_LENGTH];
   char dir[2 * SECTOR_SIZE];
   char *resourcePath, *destinationPath;
-  int testDI, testRI, i = 0, jmlParents = 0, *success, *cwdIdx;
+  int testDI, testRI, i = 0, jmlParents = 0, success, cwdIdx;
   char destinationIndex, resourceIndex;
   char fname[FILE_NAME_LENGTH];
   char parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
   int tmp = 2 * SECTOR_SIZE;
   char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
 
-  getParameter(&cwdIdx, argv);
+  getParameter(&cwdIdx, cwdName, argv, &success);
   strncpy(&resourcePath, &argv[1], MAXIMUM_CMD_LEN);
   strncpy(&destinationPath, &argv[2], MAXIMUM_CMD_LEN);
 

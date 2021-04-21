@@ -24,7 +24,7 @@ KERNEL=$(OUT_DIR)/kernel
 KERNEL_ASM=$(ASM_DIR)/kernel.asm
 KERNEL_ASM_OUT=$(OUT_DIR)/kernel_asm.o
 
-LIB_C=math string fileIO folderIO
+LIB_C=math string fileIO folderIO io
 LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
 
 SHELL_C_APP=cat mv cp mkdir rm ln logo
@@ -62,11 +62,11 @@ $(SHELL_OUT): $(SHELL_C)
 $(LIB_ASM_OUT): $(LIB_ASM) $(OUT_DIR)
 	nasm -f as86 $< -o $@ -I $(OUT_DIR)
 
-$(SHELLL): $(SHELL_OUT) $(LIB_ASM_OUT) $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_fileIO.o 
+$(SHELLL): $(SHELL_OUT) $(LIB_ASM_OUT) $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_io.o
 	ld86 -o $@ -d $^
 	python3 tools/loadfile/loadfile.py out/system.img $@
 
-$(SHELL_C_APP): $(LIB_C_OUT) $(LIB_ASM_OUT)
+$(SHELL_C_APP): $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_io.o $(LIB_ASM_OUT)
 	ld86 -o $(BIN)/$@ -d $(OUT_DIR)/shell_$@.o $^
 	python3 tools/loadfile/loadfile.py out/system.img $(BIN)/$@
 

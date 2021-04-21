@@ -1,5 +1,5 @@
-#ifndef _FILE_IO_H_
-#define _FILE_IO_H_
+#ifndef _IO_H_
+#define _IO_H_
 
 #define FILE_NAME_LENGTH    14
 #define FILE_ENTRY_LENGTH   16
@@ -18,17 +18,19 @@
 #define MAXIMUM_ARGC        10
 
 #include "string.h"
+#include "boolean.h"
 
-void readSector(char *buffer, int sector);
-void writeSector(char *buffer, int sector);
 void clearSector(int sector);
 
-void readFile(char *buffer, char *path, int *result, char parentIndex);
-void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
+void removeFile(char *path, int *result, char parentIndex);
 
 int getFileIndex(char *path, char parentIndex, char *dir);
 int parsePath(char *path, char *parents, char *fname);
 
+void setParameter(int parentIndex, char *cwdName, char *argv, int *success);
+void getParameter(int *parentIndex, char *cwdName, char *argv, int *success);
+
 void clear(char *buffer, int length);
+int getSectorsNeeded(char *argv);
 
 #endif

@@ -119,7 +119,7 @@ int str2int (char* string) {
   // TODO: handle negatives
   int i, res;
   char s[6];
-
+ 
   strncpy(s, string, 6);
   res = s[0] && 0;
   for (i = 1; i < 6 && s[i] != 0; i++) {
