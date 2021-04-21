@@ -1,5 +1,5 @@
 #include "headers/cp.h"
-#include "../../lib/headers/io.h"
+#include "../../lib/lib.h"
 
 // TODO: cek yang mau di-link file apa dir
 int main() {

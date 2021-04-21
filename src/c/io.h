@@ -8,29 +8,23 @@
 #define SECTOR_SIZE         512
 #define SECTOR_ENTRY_LENGTH 16
 #define SECTOR_FILE_TOTAL   32
-#define SECTOR_TOTAL        2880
 
 #define MAP_SECTOR          0x100
 #define ROOT_SECTOR         0x101
 #define SECTORS_SECTOR      0x103
 
-#define MAXIMUM_CMD_LEN     20
-#define MAXIMUM_ARGC        10
+void readSector(char *buffer, int sector);
+void writeSector(char *buffer, int sector);
 
-#include "string.h"
-#include "boolean.h"
-
-void clearSector(int sector);
-
-void removeFile(char *path, int *result, char parentIndex);
+void readFile(char *buffer, char *path, int *result, char parentIndex);
+void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
 
 int getFileIndex(char *path, char parentIndex, char *dir);
 int parsePath(char *path, char *parents, char *fname);
 
-void setParameter(int parentIndex, char *cwdName, char *argv, int *success);
-void getParameter(int *parentIndex, char *cwdName, char *argv, int *success);
-
 void clear(char *buffer, int length);
-int getSectorsNeeded(char *argv);
+
+void printString(char *string);
+void readString(char *string);
 
 #endif

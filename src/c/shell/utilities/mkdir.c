@@ -1,5 +1,5 @@
 #include "headers/mkdir.h"
-#include "../../lib/headers/io.h"
+#include "../../lib/lib.h"
 
 int main () {
   printString("");

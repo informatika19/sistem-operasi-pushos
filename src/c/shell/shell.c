@@ -2,7 +2,7 @@
 
 #include "../lib/headers/boolean.h"
 #include "../lib/headers/string.h"
-#include "../lib/headers/io.h"
+#include "../lib/headers/fileIO.h"
 #include "../lib/headers/math.h"
 
 int main() {
@@ -12,11 +12,10 @@ int main() {
   char hist[HIST_SIZE][10 * 20];
 
   char username[7], cwdName[14];
-  // char promptHead[3], prompt[23], atSymb[2];
   char cwdIdx = 0xFF;
 
   int argc, histc = 0, i, cmd, success;
-  // interrupt(0x21, 0, "SHELLELELELLELE\r\n", 0, 0);
+
   clear(argv, 200);
   clear(hist, HIST_SIZE * 200);
   clear(username, 7);
@@ -71,7 +70,7 @@ int main() {
           }
           break;
         case 5: // cwd
-          printNumber(cwdIdx); // ??
+          printNumber(cwdIdx);
           interrupt(0x21, 0, " - ", 0, 0);
           interrupt(0x21, 0, cwdName, 0, 0);
           interrupt(0x21, 0, "\r\n", 0, 0);

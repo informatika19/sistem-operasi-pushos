@@ -1,5 +1,5 @@
 #include "headers/logo.h"
-#include "../../lib/headers/string.h"
+#include "../../lib/lib.h"
 
 int main() {
   int success;

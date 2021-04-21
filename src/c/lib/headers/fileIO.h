@@ -17,18 +17,17 @@
 #define MAXIMUM_CMD_LEN     20
 #define MAXIMUM_ARGC        10
 
-#include "string.h"
-
-void readSector(char *buffer, int sector);
-void writeSector(char *buffer, int sector);
 void clearSector(int sector);
+void clear(char *buffer, int length);
 
-void readFile(char *buffer, char *path, int *result, char parentIndex);
-void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
+void removeFile(char *path, int *result, char parentIndex);
 
 int getFileIndex(char *path, char parentIndex, char *dir);
 int parsePath(char *path, char *parents, char *fname);
 
-void clear(char *buffer, int length);
+void setParameter(int parentIndex, char *cwdName, char *argv, int *success);
+void getParameter(int *parentIndex, char *cwdName, char *argv, int *success);
+
+int getSectorsNeeded(char *argv);
 
 #endif

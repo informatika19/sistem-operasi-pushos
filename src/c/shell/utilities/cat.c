@@ -1,5 +1,5 @@
 #include "headers/cat.h"
-#include "../../lib/headers/io.h"
+#include "../../lib/lib.h"
 
 int main() {
   int cwdIdx, success;
@@ -22,7 +22,7 @@ int main() {
     interrupt(0x21, 0, "An error occured while reading file ", 0, 0);
     interrupt(0x21, 0, path, 0, 0);
     interrupt(0x21, 0, "\r\n", 0, 0);
-    interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
+    interrupt(0x21, 0x0006, "shell", 0x3000, &success);
   }
 
   strncpy(&path, &argv[1], MAXIMUM_CMD_LEN);
@@ -35,5 +35,5 @@ int main() {
     interrupt(0x21, 0, path, 0, 0);
   }
   interrupt(0x21, 0, "\r\n", 0, 0);
-  interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
+  interrupt(0x21, 0x0006, "shell", 0x3000, &success);
 }

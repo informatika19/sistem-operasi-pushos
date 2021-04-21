@@ -1,7 +1,6 @@
 #include "headers/string.h"
 #include "headers/math.h"
 
-
 int strcmp(char *s1, char *s2) {
   for (; *s1 && *s1 == *s2; s1++, s2++);
   return *(unsigned char*)s1 - *(unsigned char*)s2;
@@ -47,37 +46,11 @@ char *strncat(char *dest, char *src, int n) {
 }
 
 void printString(char *string) {
-  while (*string != '\0') {
-    interrupt(0x10, 0x0E00 + *string, 0, 0, 0);
-    string++;
-  }
+  interrupt(0x21, 0, string, 0,0);
 }
 
 void readString(char *string) {
-  int i = 0;
-  while (1) {
-    int key = interrupt(0x16, 0, 0, 0, 0);
-    switch (key) {
-      case 0xD:
-        string[i] = 0x0;
-        printString("\r\n\0");
-        return;
-      case 0x8:
-        if (i > 0) {
-          i--;
-          interrupt(0x10, 0x0E00 + 0x8, 0, 0, 0);
-          i++;
-          interrupt(0x10, 0x0E00 + 0x0, 0, 0, 0);
-          i--;
-          interrupt(0x10, 0x0E00 + 0x8, 0, 0, 0);
-        }
-        break;
-      default:
-        string[i] = key;
-        interrupt(0x10, 0x0E00 + key, 0, 0, 0);
-        i++;
-    }
-  }
+  interrupt(0x21, 1, string, 0,0);
 }
 
 void printNumber(int number) {
@@ -90,7 +63,7 @@ void printNumber(int number) {
 
   if (number < 10) {
     c = number + '0';
-    interrupt(0x10, 0x0E00 + c, 0, 0, 0);
+    interrupt(0x21, 0, c, 0, 0);
   } else {
     printNumber(div(number, 10));
     printNumber(mod(number, 10));

@@ -1,17 +1,15 @@
 #include "kernel.h"
-
-#include "lib/lib.h"
-#include "shell/shell.h"
+#include "io.h"
 
 int main() {
-  char buffer[SECTOR_SIZE];
+  char buffer[512];
   char *success;
 
   makeInterrupt21();
 
   executeProgram("logo", 0x3000, &success, 0x00); // segmennya dukun anjay
 
-  while (true);
+  while (1);
 }
 
 void handleInterrupt21(int AX, int BX, int CX, int DX) {
