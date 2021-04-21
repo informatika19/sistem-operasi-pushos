@@ -89,7 +89,7 @@ void int2str (char* string, int number) {
 }
 
 int str2int (char* string) {
-  // TODO: handle negatives
+  // TODO: handle negatives, bugs?
   int i, res;
   char s[6];
  

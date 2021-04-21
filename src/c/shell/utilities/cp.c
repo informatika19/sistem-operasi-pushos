@@ -3,8 +3,8 @@
 
 // TODO: cek yang mau di-link file apa dir
 int main() {
-  char *resourcePath, *destinationPath;
-  int success, *cwdIdx;
+  char resourcePath[MAXIMUM_CMD_LEN], destinationPath[MAXIMUM_CMD_LEN];
+  int success, cwdIdx;
   char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
   char buf[16 * SECTOR_SIZE], dir[2 * SECTOR_SIZE];
   char cwdName[FILE_NAME_LENGTH];
@@ -18,25 +18,25 @@ int main() {
   interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
 
   // read file
-  interrupt(0x21, (*cwdIdx << 8) + 0x04, buf, *resourcePath, &res);
+  readFile(buf, resourcePath, &res, cwdIdx);
   if (res <= 0) {  // read error
     goto cp_error;
-    interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
+    exec("shell", 0x3000, &success, 0x00);
     return;
   }
 
   // write file
-  interrupt(0x21, (*cwdIdx << 8) + 0x05, buf, *destinationPath, &res);
+  writeFile(buf, destinationPath, &res, cwdIdx);
   if (res <= 0) {  // write errror
     goto cp_error;
-    interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
+    exec("shell", 0x3000, &success, 0x00);
     return;
   }
 
-  interrupt(0x21, 0x0006, "shell", 0x3000, &success, 0);
+  exec("shell", 0x3000, &success, 0x00);
   return;
 
 cp_error:
-  interrupt(0x21, 0, "Terjadi kesalahan saat membuat symbolic link\r\n", 0, 0);
+  printString("An error occured while making a copy\r\n");
   return;
 }

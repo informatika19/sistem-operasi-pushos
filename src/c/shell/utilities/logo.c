@@ -12,7 +12,7 @@ int main() {
   readString(0);
   printString("\r\n");
   interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
-  interrupt(0x21, 0x0006, "shell", 0x3000, &success);
+  exec("shell", 0x3000, &success, 0x00);
 }
 
 void printLogoGrafik() {

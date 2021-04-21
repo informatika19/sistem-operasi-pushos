@@ -19,21 +19,23 @@ int main() {
   printString(" <<< success cat\r\n");
 
   if (!success) {
-    interrupt(0x21, 0, "An error occured while reading file ", 0, 0);
-    interrupt(0x21, 0, path, 0, 0);
-    interrupt(0x21, 0, "\r\n", 0, 0);
-    interrupt(0x21, 0x0006, "shell", 0x3000, &success);
+    printString("An error occured while reading file ");
+    printString(path);
+    printString("\r\n");
+    
+    exec("shell", 0x3000, &success, 0x00);
   }
 
   strncpy(&path, &argv[1], MAXIMUM_CMD_LEN);
-  interrupt(0x21, (cwdIdx << 8) + 0x04, buf, path, &res);
+  readFile(buf, path, &res, cwdIdx);
 
   if (res > 0) {
-    interrupt(0x21, 0, buf, 0, 0);
+    printString(buf);
   } else {
-    interrupt(0x21, 0, "An error occured while reading file ", 0, 0);
-    interrupt(0x21, 0, path, 0, 0);
+    printString("An error occured while reading file ");
+    printString(path);
   }
-  interrupt(0x21, 0, "\r\n", 0, 0);
-  interrupt(0x21, 0x0006, "shell", 0x3000, &success);
+  
+  printString("\r\n");
+  exec("shell", 0x3000, &success, 0x00);
 }

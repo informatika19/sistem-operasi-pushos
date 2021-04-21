@@ -32,4 +32,6 @@ void getParameter(int *parentIndex, char *cwdName, char *argv, int *success);
 
 int getSectorsNeeded(char *argv);
 
+void exec(char *path, int segment, int *success, int parentIndex);
+
 #endif

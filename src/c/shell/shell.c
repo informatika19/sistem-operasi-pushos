@@ -6,15 +6,13 @@
 #include "../lib/headers/math.h"
 
 int main() {
-  char command[10 * 20];  // kalo pointer aja takut error
+  char command[10 * 20];
   char argv[10][20];
-
   char hist[HIST_SIZE][10 * 20];
-
-  char username[7], cwdName[14];
-  char cwdIdx = 0xFF;
-
+  char username[7], cwdName[14], cwdIdx;
   int argc, histc = 0, i, cmd, success;
+
+  cwdIdx = 0xFF;
 
   clear(argv, 200);
   clear(hist, HIST_SIZE * 200);
@@ -25,29 +23,36 @@ int main() {
   cwdName[0] = '/';
   cwdName[1] = 0;
 
-  /*
-  getParameter(&cwdIdx, cwdName, argv, &success);
-  if (success == 1) {
-    clear(argv, 10 * 20);
-  }
-  */
-
   while (true) {
-    // removeFile("temp", &success, 0x00);
+    success = 0;
+    getParameter(&cwdIdx, cwdName, argv, &success);
+    if (success == 1) {
+      clear(argv, 10 * 20);
+      // printString("cwdIdx: ");
+      // printNumber(cwdIdx);
+      // printString("\r\nsuccess: \r\n");
+      // printNumber(success);
+      printString("got params\r\n");
+    }
 
-    interrupt(0x21, 0, username, 0, 0);
-    interrupt(0x21, 0, "@", 0, 0);
-    interrupt(0x21, 0, cwdName, 0, 0);
-    interrupt(0x21, 0, "> ", 0, 0);
+    removeFile("temp", &success, 0x00);
+    // printString("\r\nsuccess: \r\n");
+    // printNumber(success);
+    // printString("\r\n");
+
+    printString(username);
+    printString("@");
+    printString(cwdName);
+    printString("> ");
     
     clear(command, 200);
     clear(argv, 10 * 20);
 
-    interrupt(0x21, 1, command, 0, 0);
+    readString(command);
     // parse dan hasil parse
     argc = commandParser(command, argv);
 
-    interrupt(0x21, 0, "\r\n", 0, 0);
+    printString("\r\n");
     if (argc < 0) {
       continue;
     } else {
@@ -55,7 +60,7 @@ int main() {
       switch(cmd) {
         case 1: // cd
           if (argc != 2) {
-            interrupt(0x21, 0, "Usage: cd <path/directory>\r\n", 0, 0);
+            printString("Usage: cd <path/directory>\r\n");
           } else {
             shell_cd(&cwdIdx, argv[1], cwdName);
           }
@@ -66,45 +71,45 @@ int main() {
           } else if (argc == 1) {
             shell_ls(cwdIdx, 0);
           } else {
-            interrupt(0x21, 0, "Usage: ls <path/directory> or ls", 0, 0);
+            printString("Usage: ls <path/directory> or ls");
           }
           break;
         case 5: // cwd
           printNumber(cwdIdx);
-          interrupt(0x21, 0, " - ", 0, 0);
-          interrupt(0x21, 0, cwdName, 0, 0);
-          interrupt(0x21, 0, "\r\n", 0, 0);
+          printString(" - ");
+          printString(cwdName);
+          printString("\r\n");
           break;
         case 6: // history
           for (i = 0; i < HIST_SIZE; i++) {
             if (strlen(hist[i]) != 0) {
-              interrupt(0x21, 0, hist[i], 0, 0);
-              interrupt(0x21, 0, "\r\n", 0, 0);
+              printString(hist[i]);
+              printString("\r\n");
             }
           }
           break;
         case 3: // cat
           setParameter(cwdIdx, cwdName, argv, &success);
           if (argc != 2 || !success) {
-            interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
+            printString("Usage: cat <path/file>\r\n");
           } else {
-            interrupt(0x21, 0x0006, "cat", 0x3001, &success);
+            exec("cat", 0x3001, &success, 0x00);
           }
           break;
         case 4: // ln
           setParameter(cwdIdx, cwdName, argv, &success);
           if (argc != 3 || !success) {
-            interrupt(0x21, 0, "Usage: ln <path/src> <path/dest>\r\n", 0, 0);
+            printString("Usage: ln <path/src> <path/dest>\r\n");
           } else {
-            interrupt(0x21, 0x0006, "ln", 0x3001, &success);
+            exec("ln", 0x3001, &success, 0x00);
           }
           break;
         case 7: // cp
           setParameter(cwdIdx, cwdName, argv, &success);
           if (argc != 3 || !success) {
-            interrupt(0x21, 0, "Usage: cp <path/src> <path/dest>\r\n", 0, 0);
+            printString("Usage: cp <path/src> <path/dest>\r\n");
           } else {
-            interrupt(0x21, 0x0006, "cp", 0x3001, &success);
+            exec("cp", 0x3001, &success, 0x00);
           }
           break;
         case 8: // mv
@@ -117,11 +122,11 @@ int main() {
           setParameter(cwdIdx, cwdName, argv, &success);
           break;
         default: // -1
-          interrupt(0x21, 0, "Unknown command ", 0, 0);
-          interrupt(0x21, 0, argv[0], 0, 0);
-          interrupt(0x21, 0, "\r\n", 0, 0);
+          printString("Unknown command ");
+          printString(argv[0]);
+          printString("\r\n");
       }
-      interrupt(0x21, 0, "\r\n", 0, 0);
+      printString("\r\n");
     }
 
     // HISTORY
@@ -131,7 +136,7 @@ int main() {
     }
     strcpy(hist[HIST_SIZE - 1], command);
     histc++;
-    interrupt(0x21, 0, "\r", 0, 0);
+    printString("\r");
   }
 
 }
@@ -209,14 +214,14 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
           *parentIndex = tmpPI;
           strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, 14);
       } else {
-          interrupt(0x21, 0, path, 0, 0);
-          interrupt(0x21, 0, " is not a directory.", 0, 0);
-          // interrupt(0x21, 0, "\r\n", 0, 0);
+          printString(path);
+          printString(" is not a directory.");
+          // printString("\r\n");
       }
     } else {
-      interrupt(0x21, 0, "Directory ", 0, 0);
-      interrupt(0x21, 0, path, 0, 0);
-      interrupt(0x21, 0, " not found.", 0, 0);
+      printString("Directory ");
+      printString(path);
+      printString(" not found.");
     }
   }
   return;
@@ -230,39 +235,39 @@ void shell_ls(char parentIndex, char* folder) {
   interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
   interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
 
-  if (strncmp(&folder, "", 1) == 0) {
+  if (folder == 0) {
     i = 0;
     while (i < 2 * 512) {
       if (*(dir + i) == parentIndex && *(dir + i + 2) != 0) {
-          interrupt(0x21, 0, dir + i + 2, 0, 0);
-          if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
-          interrupt(0x21, 0, "\r\n", 0, 0);
+        printString(dir + i + 2);
+        if (*(dir + i + 1) == '\xFF') printString("/");
+        printString("\r\n");
       }
       i += 16;
     }
   } else {
     for (i = 0; i < 64; i++) {
-      if (dir[16 * i] == parentIndex
-          && dir[16 * i + 2] != 0
-          && dir[16 * i + 1] == '\xFF'
-          && strncmp(dir[16 * i + 2], *folder, 14) == 0) { 
+      if (*(dir + 16 * i) == parentIndex
+          && *(dir + 16 * i + 2) != 0
+          && *(dir + 16 * i + 1) == '\xFF'
+          && strncmp((dir + 16 * i + 2), folder, 14) == 0) { 
         found = true;
         j = i;
         break;
       }
     }
     if (!found) {
-      interrupt(0x21, 0, "There is no folder named ", 0, 0);
-      interrupt(0x21, 0, folder, 0, 0);
-      interrupt(0x21, 0, " in this directory", 0, 0);
-      // interrupt(0x21, 0, "\r\n", 0, 0);
+      printString("There is no folder named ");
+      printString(folder);
+      printString(" in this directory");
+      // printString("\r\n");
       return;
     } else {
       while (i < 2 * 512) {
       if (*(dir + i) == j && *(dir + i + 2) != 0) {
-          interrupt(0x21, 0, dir + i + 2, 0, 0);
-          if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
-          interrupt(0x21, 0, "\r\n", 0, 0);
+          printString(dir + i + 2);
+          if (*(dir + i + 1) == '\xFF') printString("/");
+          printString("\r\n");
         }
       i += 16;
       }

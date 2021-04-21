@@ -187,7 +187,7 @@ int parsePath(char *path, char *parents, char *fname) {
   return div(j, FILE_NAME_LENGTH);
 }
 
-void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
+void setParameter(char parentIndex, char *cwdName, char *argv, int* success) {
   char buffer[SECTOR_SIZE], pi[6];
   int i, sectors;
 
@@ -195,9 +195,7 @@ void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
   clear(buffer, SECTOR_SIZE);
   sectors = getSectorsNeeded(argv);
   int2str(&pi, parentIndex);
-  printString(pi); //x
-  printString(cwdName); //x
-  // printString(" <<< pi\r\n"); //x
+
   strncpy(buffer, pi, 6);
   strncpy(buffer+6, cwdName, FILE_NAME_LENGTH);
   // printString(cwdName); //x
@@ -209,14 +207,14 @@ void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
   }
 
   interrupt(0x21, 0x0005, buffer, "temp", &sectors); // writeFile
-  printNumber(sectors); //x
-  printString(" <<< sectors\r\n"); //x
+  // printNumber(sectors); //x
+  // printString(" <<< sectors\r\n"); //x
 
   if (sectors > 0) *success = 1;
   else *success = 0;
 }
 
-void getParameter(int *parentIndex, char *cwdName, char *argv, int *success) {
+void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
   char buffer[SECTOR_SIZE];
   int i, result;
 
@@ -226,6 +224,7 @@ void getParameter(int *parentIndex, char *cwdName, char *argv, int *success) {
   if (result == -1) {
     return;
   } else {
+    *success = 1;
     *parentIndex = dec2hex(str2int(buffer));
     strncpy(cwdName, buffer+6, FILE_NAME_LENGTH);
 
@@ -234,7 +233,6 @@ void getParameter(int *parentIndex, char *cwdName, char *argv, int *success) {
               (buffer + (i+1) * MAXIMUM_CMD_LEN), MAXIMUM_ARGC);
     }
   
-    *success = 1;
     return;
   }
 }
@@ -250,4 +248,8 @@ int getSectorsNeeded(char *argv) {
   a = div(i, SECTOR_SIZE);  // ceiling
   b = mod(i, SECTOR_SIZE);
   return b > 0 ? a + 1 : a;
+}
+
+void exec(char *path, int segment, int *success, int parentIndex) {
+  interrupt(0x21, (parentIndex << 8) + 0x06, path, segment, success);
 }
