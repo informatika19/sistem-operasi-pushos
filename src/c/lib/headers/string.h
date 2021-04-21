@@ -14,5 +14,6 @@ void printNumber(int number);
 void readString(char *string);
 void int2str (char* string, int number);
 int str2int (char* string);
+int dec2hex (int number);
 
 #endif

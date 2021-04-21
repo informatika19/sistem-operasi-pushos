@@ -152,10 +152,8 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
         entrySectors += 0x10);
 
   *sectors = 0;
-  for (i = 0; i < sectorNeeded; ++i, ++(*sectors)) {
+  for (i = 0; i < sectorNeeded; ++i, ++(*sectors))
     *(sec + entrySectors + i) = sectorsToUse[i];
-    printString("NOOOOOOOOOOOOOOOOOOO\r\n"); //x
-  }
 
   // akusisi entry yang ditemukan sebelumnya
   *(dir + entry) = parentIndex;
@@ -268,7 +266,7 @@ void setParameter(int parentIndex, char *cwdName, char *argv, int* success) {
   // printString(pi); //x
   // printString(" <<< pi\r\n"); //x
   strncpy(buffer, pi, 6);
-  strncpy(buffer, cwdName, FILE_NAME_LENGTH);
+  strncpy(buffer+6, cwdName, FILE_NAME_LENGTH);
   // printString(cwdName); //x
   // printString(" <<< cwdName\r\n"); //x
 
@@ -295,14 +293,25 @@ void getParameter(int *parentIndex, char *cwdName, char *argv, int *success) {
   if (result == -1) {
     return;
   } else {
-    *parentIndex = str2int(buffer) && 0xFF;
+    *parentIndex = dec2hex(str2int(buffer));
+    printNumber(str2int(buffer));
+    printString(" <<< num 1\r\n");
+    printNumber(str2int(buffer) && 0xFF);
+    printString(" <<< num 2\r\n");
+    printNumber(dec2hex(str2int(buffer)));
+    printString(" <<< num 3\r\n");
+    printNumber(dec2hex(str2int(buffer)) && 0xFF);
+    printString(" <<< num 4\r\n");
     strncpy(cwdName, buffer+6, FILE_NAME_LENGTH);
 
     for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
       strncpy((argv + i * MAXIMUM_CMD_LEN),
               (buffer + (i+1) * MAXIMUM_CMD_LEN), MAXIMUM_ARGC);
     }
+  
     *success = 1;
+    printString("!!!!!!!\r\n");
+    return;
   }
 }
 

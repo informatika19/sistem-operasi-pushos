@@ -86,7 +86,6 @@ int main() {
           }
           break;
         case 3: // cat
-          printString("---\r\n"); //x
           setParameter(cwdIdx, cwdName, argv, &success);
           if (argc != 2 || !success) {
             interrupt(0x21, 0, "Usage: cat <path/file>\r\n", 0, 0);
@@ -212,12 +211,14 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
           strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, FILE_NAME_LENGTH);
       } else {
           interrupt(0x21, 0, path, 0, 0);
-          interrupt(0x21, 0, " is not a directory.\r\n", 0, 0);
+          interrupt(0x21, 0, " is not a directory.", 0, 0);
+          // interrupt(0x21, 0, "\r\n", 0, 0);
       }
     } else {
       interrupt(0x21, 0, "Directory ", 0, 0);
       interrupt(0x21, 0, path, 0, 0);
-      interrupt(0x21, 0, " not found.\r\n", 0, 0);
+      interrupt(0x21, 0, " not found.", 0, 0);
+      // interrupt(0x21, 0, "\r\n", 0, 0);
     }
   }
   return;
@@ -255,7 +256,8 @@ void shell_ls(char parentIndex, char* folder) {
     if (!found) {
       interrupt(0x21, 0, "There is no folder named ", 0, 0);
       interrupt(0x21, 0, folder, 0, 0);
-      interrupt(0x21, 0, " in this directory\r\n", 0, 0);
+      interrupt(0x21, 0, " in this directory", 0, 0);
+      // interrupt(0x21, 0, "\r\n", 0, 0);
       return;
     } else {
       while (i < 2 * SECTOR_SIZE) {

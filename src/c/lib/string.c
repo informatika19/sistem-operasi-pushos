@@ -128,3 +128,11 @@ int str2int (char* string) {
 
   return res;
 }
+
+int dec2hex (int number) {
+  // max number 255
+  int a, b;
+  a = (div(number, 16) && 0xFF) * 0x10;
+  b = (mod(number, 16) && 0xFF);
+  return a + b;
+}
