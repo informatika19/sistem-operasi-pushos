@@ -10,6 +10,7 @@ int main() {
   char argv[10][20];
   char hist[HIST_SIZE][10 * 20];
   char username[7], cwdName[14], cwdIdx;
+  char program[18];
   int argc, histc = 0, i, cmd, success;
 
   cwdIdx = 0xFF;
@@ -26,13 +27,8 @@ int main() {
   while (true) {
     success = 0;
     getParameter(&cwdIdx, cwdName, argv, &success);
-    if (success == 1) {
-      clear(argv, 10 * 20);
-      printString("got params\r\n");
-    }
 
     removeFile("temp", &success, 0x00);
-    if (success == 1) printString("removed file\r\n"); //x
 
     printString(username);
     printString("@");
@@ -115,6 +111,11 @@ int main() {
         case 10: // mkdir
           setParameter(cwdIdx, cwdName, argv, &success);
           break;
+        case 11: // local program
+          setParameter(cwdIdx, cwdName, argv, &success);
+          strncpy(program, argv + 2, MAXIMUM_CMD_LEN-2);
+          exec(program, 0x3001, &success, cwdIdx);
+          break;
         default: // -1
           printString("Unknown command ");
           printString(argv[0]);
@@ -132,7 +133,6 @@ int main() {
     histc++;
     printString("\r");
   }
-
 }
 
 int cmdcmp(char *argv) {
@@ -146,6 +146,7 @@ int cmdcmp(char *argv) {
   if (strncmp("mv", argv, 20) == 0) return 8;
   if (strncmp("rm", argv, 20) == 0) return 9;
   if (strncmp("mkdir", argv, 20) == 0) return 10;
+  if (strncmp("./", argv, 2) == 0) return 11;
   return -1;
 }
 
@@ -188,8 +189,8 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
 
   if (strncmp(path, ".", 20)) {
     if (strncmp(path, "/", 20) != 0) {
-      interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
-      interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
+      readSector(dir, ROOT_SECTOR);
+      readSector(dir+SECTOR_SIZE, ROOT_SECTOR+1);
 
       test = getFileIndex(path, *parentIndex, dir);
       tmpPI = test & 0xFF;
@@ -225,8 +226,8 @@ void shell_ls(char parentIndex, char* folder) {
   bool found = false;
   char dir[2 * 512];
 
-  interrupt(0x21, 0x0002, dir, 0x101, 0);  // readSector
-  interrupt(0x21, 0x0002, dir + 512, 0x102, 0);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir+SECTOR_SIZE, ROOT_SECTOR+1);
 
   if (folder == 0) {
     i = 0;
