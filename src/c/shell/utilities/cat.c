@@ -9,17 +9,13 @@ int main() {
 
   getParameter(&cwdIdx, cwdName, argv, &success);
 
+  strncpy(path, argv[1], MAXIMUM_CMD_LEN);
   if (!success) {
     printString("An error occured while reading file ");
     printString(path);
   } else {
     // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
-    strncpy(path, argv[1], MAXIMUM_CMD_LEN);
-    printString("giibbe\r\n"); //x
-    readFile(buf, path, &res, cwdIdx);
-    printString("\r\nrish\r\n"); //x
-    printNumber(res); //x
-    printString("\r\n"); //x
+    readFile(buf, path, &res, cwdIdx); // buggy
 
     if (res > 0) {
       printString(buf);
@@ -29,6 +25,7 @@ int main() {
     }
   }
 
+  printString("\r\n");
   printString("\r\n");
   exec("shell", 0x3000, &success, 0x00);
 }
