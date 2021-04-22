@@ -28,17 +28,11 @@ int main() {
     getParameter(&cwdIdx, cwdName, argv, &success);
     if (success == 1) {
       clear(argv, 10 * 20);
-      // printString("cwdIdx: ");
-      // printNumber(cwdIdx);
-      // printString("\r\nsuccess: \r\n");
-      // printNumber(success);
       printString("got params\r\n");
     }
 
     removeFile("temp", &success, 0x00);
-    // printString("\r\nsuccess: \r\n");
-    // printNumber(success);
-    // printString("\r\n");
+    if (success == 1) printString("removed file\r\n");
 
     printString(username);
     printString("@");
@@ -216,7 +210,6 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
       } else {
           printString(path);
           printString(" is not a directory.");
-          // printString("\r\n");
       }
     } else {
       printString("Directory ");
@@ -260,7 +253,6 @@ void shell_ls(char parentIndex, char* folder) {
       printString("There is no folder named ");
       printString(folder);
       printString(" in this directory");
-      // printString("\r\n");
       return;
     } else {
       while (i < 2 * 512) {

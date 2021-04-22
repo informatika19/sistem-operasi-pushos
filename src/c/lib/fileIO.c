@@ -3,6 +3,14 @@
 #include "headers/boolean.h"
 #include "headers/math.h"
 
+void readSector(char *buffer, int sector) {
+  interrupt(0x21, 0x0002, buffer, sector, 0);
+}
+
+void writeSector(char *buffer, int sector) {
+  interrupt(0x21, 0x0003, buffer, sector, 0);
+}
+
 /**
  * @param sector index sector di system img
  */
@@ -193,22 +201,18 @@ void setParameter(char parentIndex, char *cwdName, char *argv, int* success) {
 
   clear(pi, 6);
   clear(buffer, SECTOR_SIZE);
-  sectors = getSectorsNeeded(argv);
   int2str(&pi, parentIndex);
 
   strncpy(buffer, pi, 6);
   strncpy(buffer+6, cwdName, FILE_NAME_LENGTH);
-  // printString(cwdName); //x
-  // printString(" <<< cwdName\r\n"); //x
 
   for (i = 0; i < MAXIMUM_ARGC && *(argv + i * MAXIMUM_CMD_LEN) != 0; i++) {
     strncpy((buffer + (i+1) * MAXIMUM_CMD_LEN),
-            (argv + i * MAXIMUM_CMD_LEN), MAXIMUM_ARGC);
+            (argv + i * MAXIMUM_CMD_LEN), MAXIMUM_CMD_LEN);
   }
 
+  sectors = getSectorsNeeded(argv);
   interrupt(0x21, 0x0005, buffer, "temp", &sectors); // writeFile
-  // printNumber(sectors); //x
-  // printString(" <<< sectors\r\n"); //x
 
   if (sectors > 0) *success = 1;
   else *success = 0;
@@ -216,7 +220,7 @@ void setParameter(char parentIndex, char *cwdName, char *argv, int* success) {
 
 void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
   char buffer[SECTOR_SIZE];
-  int i, result;
+  int i, result, cwdIdx;
 
   interrupt(0x21, 0x0004, buffer, "temp", &result); // readFile
 
@@ -225,8 +229,15 @@ void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
     return;
   } else {
     *success = 1;
-    *parentIndex = dec2hex(str2int(buffer));
+    str2int(buffer, &cwdIdx);
+    *parentIndex = dec2hex(cwdIdx);
     strncpy(cwdName, buffer+6, FILE_NAME_LENGTH);
+    printString("cwdName: ");
+    printString(cwdName);
+    printString("\r\n");
+    printString("Parent Index: ");
+    printNumber(*parentIndex);
+    printString("\r\n");
 
     for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
       strncpy((argv + i * MAXIMUM_CMD_LEN),

@@ -13,8 +13,8 @@ void printString(char *string);
 void readString(char *string);
 void printNumber(int number);
 
-void int2str (char* string, int number);
-int str2int (char* string);
+void int2str (char *string, int number);
+void str2int (char *string, int *number);
 int dec2hex (int number);
 
 #endif

@@ -21,9 +21,6 @@ void readString(char *string) {
     switch (key) {
       case 0xD:
         string[i] = 0x0;
-        // printString("\r\n\0");
-        // interrupt(0x10, 0x0E00 + '\r', 0, 0, 0);
-        // interrupt(0x10, 0x0E00 + '\n', 0, 0, 0);
         return;
       case 0x8:
         if (i > 0) {

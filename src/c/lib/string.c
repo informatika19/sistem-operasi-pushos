@@ -88,18 +88,16 @@ void int2str (char* string, int number) {
   }
 }
 
-int str2int (char* string) {
+void str2int (char* string, int* number) {
   // TODO: handle negatives, bugs?
   int i, res;
-  char s[6];
  
-  strncpy(s, string, 6);
-  res = s[0] && 0;
-  for (i = 1; i < 6 && s[i] != 0; i++) {
-    res = res * 10 + s[i] && 0;
+  res = *string - '0';
+  for (i = 1; i < 6 && *(string + i) != 0; i++) {
+    res = res * 10 + (*(string + i) - '0');
   }
 
-  return res;
+  *number = res;
 }
 
 int dec2hex (int number) {

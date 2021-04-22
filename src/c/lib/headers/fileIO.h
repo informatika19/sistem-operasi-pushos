@@ -17,6 +17,8 @@
 #define MAXIMUM_CMD_LEN     20
 #define MAXIMUM_ARGC        10
 
+void readSector(char *buffer, int sector);
+void writeSector(char *buffer, int sector);
 void clearSector(int sector);
 void clear(char *buffer, int length);
 
