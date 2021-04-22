@@ -3,6 +3,7 @@
 #include "../lib/headers/boolean.h"
 #include "../lib/headers/string.h"
 #include "../lib/headers/fileIO.h"
+#include "../lib/headers/folderIO.h"
 #include "../lib/headers/math.h"
 
 int main() {
@@ -114,6 +115,12 @@ int main() {
           break;
         case 10: // mkdir
           setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 2 || !success)
+          {
+            printString("Usage: mkdir <foldername>\r\n");
+          } else {
+            shell_mkdir(cwdIdx, argv[1]);
+          }
           break;
         default: // -1
           printString("Unknown command ");
@@ -267,7 +274,8 @@ void shell_ls(char parentIndex, char* folder) {
   }
 }
 
-void shell_mkdir()
+void shell_mkdir(char cwdIdx, char* fName)
 {
-  
+  createFolder(cwdIdx, fName);
+  return;
 }

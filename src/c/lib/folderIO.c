@@ -6,12 +6,11 @@
 /*
 change this to work on folders
 */
-void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
+void createFolder(char *foldername, char parentIndex) {
   int i, j, entry, fNameLen, isFile, flagS, secsNeeded, secIndex;
   char mapBuffer[SECTOR_SIZE];
   char dirBuffer[SECTOR_SIZE*2];
   char secBuffer[SECTOR_SIZE];
-  char *parentIdx;
   char fName[FILE_NAME_LENGTH];
 
   // Membaca sectors
@@ -21,22 +20,22 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
 
   // Mem-validasi path
-  strncpy(&parentIdx, parentIndex, 1);
-  if (isPathValid(path, &parentIdx, dirBuffer) == 0) {
-    // printString("Path tidak valid");
-    *sectors = -4;
-    return;
-  }
+//   strncpy(&parentIdx, parentIndex, 1);
+//   if (isPathValid(path, &parentIdx, dirBuffer) == 0) {
+//     // printString("Path tidak valid");
+//     *sectors = -4;
+//     return;
+//   }
 
-  findFName(path, &isFile, &fName);
-  fNameLen = strlen(fName);
+//   findFName(path, &isFile, &fName);
+  fNameLen = strlen(foldername);
 
   // Mengecek apakah file sudah ada atau belum
   for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-    if (parentIdx == dirBuffer[FILE_ENTRY_LENGTH * entry]
+    if (parentIndex == dirBuffer[FILE_ENTRY_LENGTH * entry]
       && (strncmp(fName, dirBuffer[FILE_ENTRY_LENGTH * entry + 2], FILE_NAME_LENGTH) == 0)) {
-      // printString("File dengan nama yang sama sudah ada");
-      *sectors = -1;
+      printString("File dengan nama yang sama sudah ada");
+    //   *sectors = -1;
       return;
     }
   }
@@ -49,8 +48,8 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   }
 
   if (entry == FILE_ENTRY_TOTAL) {
-    // printString("Directory penuh\r\n\0");
-    *sectors = -2;
+    printString("Directory penuh\r\n\0");
+    // *sectors = -2;
     return;
   }
 
@@ -71,7 +70,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
   clear(dirBuffer[FILE_ENTRY_LENGTH * entry], FILE_ENTRY_LENGTH);
 
   // Menyimpan parentIndex
-  dirBuffer[FILE_ENTRY_LENGTH * entry] = parentIdx;
+  dirBuffer[FILE_ENTRY_LENGTH * entry] = parentIndex;
 
 //   // Menyimpan flag S // is always true
     // Jika file (bukan folder)
@@ -105,7 +104,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 //     writeSector(buffer+(i * SECTOR_SIZE), secIndex);
 //   }
 
-  *sectors = flagS;
+//   *sectors = flagS;
 
   writeSector(mapBuffer, MAP_SECTOR);
   writeSector(dirBuffer, ROOT_SECTOR);
