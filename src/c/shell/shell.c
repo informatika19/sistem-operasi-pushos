@@ -266,3 +266,8 @@ void shell_ls(char parentIndex, char* folder) {
     }
   }
 }
+
+void shell_mkdir()
+{
+  
+}
