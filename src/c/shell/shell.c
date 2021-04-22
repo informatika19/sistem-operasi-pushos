@@ -115,12 +115,6 @@ int main() {
           break;
         case 10: // mkdir
           setParameter(cwdIdx, cwdName, argv, &success);
-          if (argc != 2 || !success)
-          {
-            printString("Usage: mkdir <foldername>\r\n");
-          } else {
-            shell_mkdir(cwdIdx, argv[1]);
-          }
           break;
         default: // -1
           printString("Unknown command ");
