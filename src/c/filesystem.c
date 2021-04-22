@@ -27,19 +27,20 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
     *result = -1;
     return;
   }
+
   i = test & 0xFF;
   entry = dir + (i * 0x10);
 
   // bukan file
-  if (*(entry + 1) > SECTOR_FILE_TOTAL) {
+  if (*(entry + 1) > SECTOR_FILE_TOTAL-1) {
     *result = -1;
     return;
   }
 
   i = 0;
   secIdx = *(entry + 1);
-  secNo = sec + (secIdx * 0x10);
-  while (*secNo && i < 0x10) {
+  secNo = sec + (secIdx * SECTOR_FILE_TOTAL);
+  while (*secNo && i < SECTOR_FILE_TOTAL) {
     readSector(buffer + (i * SECTOR_SIZE), *secNo);
     i++;
     secNo++;

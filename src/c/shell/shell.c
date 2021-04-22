@@ -32,7 +32,7 @@ int main() {
     }
 
     removeFile("temp", &success, 0x00);
-    if (success == 1) printString("removed file\r\n");
+    if (success == 1) printString("removed file\r\n"); //x
 
     printString(username);
     printString("@");

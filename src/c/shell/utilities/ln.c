@@ -3,22 +3,22 @@
 
 // TODO: cek yang mau di-link file apa dir
 int main() { 
-  char cwdName[FILE_NAME_LENGTH];
-  char dir[2 * SECTOR_SIZE];
+  char cwdName[FILE_NAME_LENGTH], cwdIdx;
+  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
   char resourcePath[MAXIMUM_CMD_LEN], destinationPath[MAXIMUM_CMD_LEN];
-  int testDI, testRI, i = 0, jmlParents = 0, success, cwdIdx;
+  char dir[2 * SECTOR_SIZE];
+  int testDI, testRI, i = 0, jmlParents = 0, success;
   char destinationIndex, resourceIndex;
   char fname[FILE_NAME_LENGTH];
   char parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
   int tmp = 2 * SECTOR_SIZE;
-  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
 
   getParameter(&cwdIdx, cwdName, argv, &success);
-  strncpy(&resourcePath, &argv[1], MAXIMUM_CMD_LEN);
-  strncpy(&destinationPath, &argv[2], MAXIMUM_CMD_LEN);
+  strncpy(resourcePath, argv[1], MAXIMUM_CMD_LEN);
+  strncpy(destinationPath, argv[2], MAXIMUM_CMD_LEN);
 
-  interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0); // read sector
-  interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir+SECTOR_TOTAL, ROOT_SECTOR+1);
 
   testDI = getFileIndex(destinationPath, cwdIdx, dir);
   testRI = getFileIndex(resourcePath, cwdIdx, dir);
@@ -45,9 +45,11 @@ int main() {
     while (*(dir + i + 2) != 0 && i < tmp) {
       i += 0x10;
     }
+    
     if (*(dir + i + 2) != 0) {  // sektor files penuh
       printString("Sectors are full\r\n");
       goto hardLink_error;
+      printString("\r\n");
       exec("shell", 0x3000, &success, 0x00);
       return;
     }
@@ -56,14 +58,16 @@ int main() {
     *(dir + i + 1) = *(dir + resourceIndex * 0x10 + 1);
     strncpy(dir + i + 2, fname, 14);
 
-    interrupt(0x21, 0x0003, dir, ROOT_SECTOR, 0);  // writeSector
-    interrupt(0x21, 0x0003, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
+    writeSector(dir, ROOT_SECTOR);
+    writeSector(dir+SECTOR_TOTAL, ROOT_SECTOR+1);
 
+    printString("\r\n");
     exec("shell", 0x3000, &success, 0x00);
     return;
   } else {
     goto hardLink_error;
-      exec("shell", 0x3000, &success, 0x00);
+    printString("\r\n");
+    exec("shell", 0x3000, &success, 0x00);
     return;
   }
 

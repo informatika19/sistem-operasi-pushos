@@ -29,8 +29,8 @@ void removeFile(char *path, int *result, char parentIndex);
 int getFileIndex(char *path, char parentIndex, char *dir);
 int parsePath(char *path, char *parents, char *fname);
 
-void setParameter(int parentIndex, char *cwdName, char *argv, int *success);
-void getParameter(int *parentIndex, char *cwdName, char *argv, int *success);
+void setParameter(char parentIndex, char *cwdName, char *argv, int *success);
+void getParameter(char *parentIndex, char *cwdName, char *argv, int *success);
 
 int getSectorsNeeded(char *argv);
 

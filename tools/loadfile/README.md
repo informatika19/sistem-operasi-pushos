@@ -1,17 +1,10 @@
 # Cara Menggunakan Program loadfile
 
-Program loadfile akan memasukkan file pilihan ke root.
+Jalankan command berikut pada root untuk memasukkan file atau folder.
 
-1. _Compile_ `loadfile.cpp` dengan command berikut ini.
-`g++ -o loadfile loadfile.cpp`
+```sh
+$ python3 tools/loadfile/loadfile.py out/system.img <nama file atau folder> <path tujuan pada system.img>
+```
 
-2. Load file
-Buka terminal dan buka binary file dengan tambahan argumen: lokasi `system.img`dengan command berikut ini.
-`./loadfile ../../out/system.img <path file yang ingin dimasukkan>`
-Catatan : asumsi file yang ingin dimasukkan terletak di folder yang sama dengan `loadfile.cpp`.
-
-3. Load folder
-Buka terminal dan buka binary file dengan tambahan argumen: lokasi `system.img`, flag -f, nama folder, dan lokasi tujuan penyimpanan folder dengan command berikut ini.
-`./loadfile ../../out/system.img -f <nama folder> <lokasi penyimpanan folder pada OS>`
-
+Credit [loadfile.py](loadfile.py) : Kelompok GWS K03
 ___

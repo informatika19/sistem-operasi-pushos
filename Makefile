@@ -41,12 +41,6 @@ MAP_IMG=$(OUT_DIR)/map.img
 SECTORS_IMG=$(OUT_DIR)/sectors.img
 FILES_IMG=$(OUT_DIR)/files.img
 
-# LOADFILE_CPP=$(TOOLS_DIR)/loadfile/loadfile.cpp
-# LOADFILE=$(OUT_DIR)/loadfile
-
-# $(LOADFILE): $(OUT_DIR)
-# 	gcc -o $@ $(LOADFILE_CPP)
-
 $(OUT_DIR):
 	mkdir $(OUT_DIR)
 
