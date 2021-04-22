@@ -2,12 +2,11 @@
 #include "../../lib/lib.h"
 
 int main() {
-  int cwdIdx, success;
+  char cwdIdx;
   char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN], cwdName[FILE_NAME_LENGTH];
   char buf[16 * SECTOR_SIZE], path[MAXIMUM_CMD_LEN];
-  int res = 0;
+  int res = 0, success;
 
-  printString("MASUK CAT\r\n"); //x
   getParameter(&cwdIdx, cwdName, argv, &success);
   printNumber(cwdIdx); //x
 

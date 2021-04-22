@@ -229,15 +229,10 @@ void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
     return;
   } else {
     *success = 1;
-    str2int(buffer, &cwdIdx);
-    *parentIndex = dec2hex(cwdIdx);
+    *parentIndex = str2int(buffer);
+    printNumber(*parentIndex); //x
+    printString("\r\n"); //x
     strncpy(cwdName, buffer+6, FILE_NAME_LENGTH);
-    printString("cwdName: ");
-    printString(cwdName);
-    printString("\r\n");
-    printString("Parent Index: ");
-    printNumber(*parentIndex);
-    printString("\r\n");
 
     for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
       strncpy((argv + i * MAXIMUM_CMD_LEN),
@@ -249,6 +244,7 @@ void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
 }
 
 int getSectorsNeeded(char *argv) {
+  // maybe broken
   int i = 0, a, b;
   while (i < MAXIMUM_ARGC) {
     if (strncpy((argv + i * MAXIMUM_CMD_LEN), 0, 1) == 0) i++;

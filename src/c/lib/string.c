@@ -54,7 +54,7 @@ void readString(char *string) {
 }
 
 void printNumber(int number) {
-  char c;
+  char c[2];
 
   if (number < 0) {
     printString("-");
@@ -62,7 +62,8 @@ void printNumber(int number) {
   }
 
   if (number < 10) {
-    c = number + '0';
+    c[0] = number + '0';
+    c[1] = 0;
     interrupt(0x21, 0, c, 0, 0);
   } else {
     printNumber(div(number, 10));
@@ -88,22 +89,12 @@ void int2str (char* string, int number) {
   }
 }
 
-void str2int (char* string, int* number) {
-  // TODO: handle negatives, bugs?
-  int i, res;
- 
-  res = *string - '0';
-  for (i = 1; i < 6 && *(string + i) != 0; i++) {
-    res = res * 10 + (*(string + i) - '0');
-  }
+int str2int (char* str) {
+  int res = 0;
+  int i;
 
-  *number = res;
-}
+  for (i = 0; str[i] != '\0'; ++i)
+    res = res * 10 + str[i] - '0';
 
-int dec2hex (int number) {
-  // max number 255
-  int a, b;
-  a = (div(number, 16) && 0xFF) * 0x10;
-  b = (mod(number, 16) && 0xFF);
-  return a + b;
+  return res;
 }
