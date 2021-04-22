@@ -108,7 +108,7 @@ void removeFile(char *path, int *result, char parentIndex) {
 
   writeSector(map, MAP_SECTOR);
   writeSector(dir, ROOT_SECTOR);
-  writeSector(dir+SECTOR_SIZE, ROOT_SECTOR);
+  writeSector(dir+SECTOR_SIZE, ROOT_SECTOR+1);
   writeSector(sec, SECTORS_SECTOR);
 }
 

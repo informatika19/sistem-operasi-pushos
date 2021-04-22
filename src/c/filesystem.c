@@ -39,8 +39,8 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 
   i = 0;
   secIdx = *(entry + 1);
-  secNo = sec + (secIdx * SECTOR_FILE_TOTAL);
-  while (*secNo && i < SECTOR_FILE_TOTAL) {
+  secNo = sec + (secIdx * SECTOR_ENTRY_LENGTH);
+  while (*secNo && i < SECTOR_ENTRY_LENGTH) {
     readSector(buffer + (i * SECTOR_SIZE), *secNo);
     i++;
     secNo++;
