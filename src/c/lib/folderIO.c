@@ -28,7 +28,7 @@ void deleteFolder(char *path, char *parentIndex){
 
   //2
   parent = getFileIndex(argv[1], cwdIdx, dir);
-
+  
   //3
   i = 0;
   while (i < 2 * 512) {
