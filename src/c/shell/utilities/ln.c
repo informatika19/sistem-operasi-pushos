@@ -3,11 +3,13 @@
 
 // TODO: cek yang mau di-link file apa dir
 int main() { 
-  char cwdName[FILE_NAME_LENGTH], cwdIdx;
-  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
+  // getParameter
+  int success;
+  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN], cwdIdx, cwdName[FILE_NAME_LENGTH];
+
   char resourcePath[MAXIMUM_CMD_LEN], destinationPath[MAXIMUM_CMD_LEN];
   char dir[2 * SECTOR_SIZE];
-  int testDI, testRI, i = 0, jmlParents = 0, success;
+  int testDI, testRI, i = 0, jmlParents = 0;
   char destinationIndex, resourceIndex;
   char fname[FILE_NAME_LENGTH];
   char parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];

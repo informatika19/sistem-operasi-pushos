@@ -104,6 +104,11 @@ int main() {
           break;
         case 8: // mv
           setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 3 || !success) {
+            printString("Usage: mv <path/src> <path/dest>\r\n");
+          } else {
+            exec("mv", 0x3001, &success, 0x00);
+          }
           break;
         case 9: // rm
           setParameter(cwdIdx, cwdName, argv, &success);
