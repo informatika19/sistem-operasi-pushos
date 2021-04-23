@@ -128,7 +128,7 @@ int main() {
           break;
         case 11: // local program
           setParameter(cwdIdx, cwdName, argv, &success);
-          strncpy(program, argv + 2, MAXIMUM_CMD_LEN-2);
+          strncpy(program, argv + 1, MAXIMUM_CMD_LEN-2);
           exec(program, 0x3001, &success, cwdIdx);
           break;
         default: // -1
