@@ -15,7 +15,7 @@ int main() {
   strncpy(destinationPath, argv[2], MAXIMUM_CMD_LEN);
 
   readFile(buf, resourcePath, &res, cwdIdx);
-  if (res <= 0) {  // read error
+  if (res < 0) {  // read error
     goto cp_error;
     exec("shell", 0x3000, &success, 0x00);
     return;
@@ -23,7 +23,7 @@ int main() {
 
   // write file
   writeFile(buf, destinationPath, &res, cwdIdx);
-  if (res <= 0) {  // write errror
+  if (res < 0) {  // write errror
     goto cp_error;
     exec("shell", 0x3000, &success, 0x00);
     return;

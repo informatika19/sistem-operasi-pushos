@@ -245,7 +245,6 @@ void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
   if (result == -1) {
     return;
   } else {
-    *success = 1;
     strncpy(cwdName, buffer+6, FILE_NAME_LENGTH);
 
     for (i = 0; i < MAXIMUM_ARGC + 1; i++) {
@@ -254,6 +253,7 @@ void getParameter(char *parentIndex, char *cwdName, char *argv, int *success) {
     }
 
     *parentIndex = str2int(buffer) & 0xFF;
+    *success = 1;
   }
 }
 
