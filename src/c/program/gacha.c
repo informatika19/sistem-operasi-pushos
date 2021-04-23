@@ -22,9 +22,9 @@ int main() {
   printString("\nand you got ");
 
   if (res = 1) {
-    printString("Zhongli\n");
+    printString("Zhongli.\n");
   } else {
-    printString("a Sacrificial Bow\n");
+    printString("a Sacrificial Bow.\n");
   }
   
   printString("Thanks for playing!");
