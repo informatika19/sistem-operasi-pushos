@@ -14,13 +14,13 @@ int main () {
   } else {
     // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
     // strncpy(path, argv[1], MAXIMUM_CMD_LEN);
-    printString("start\r\n"); //x
+    // printString("start\r\n"); //x
     createFolder(cwdIdx, argv[1]);
-    printString("\r\nend\r\n"); //x
+    // printString("\r\nend\r\n"); //x
     // printNumber(res); //x
-    printString("\r\n"); //x
+    // printString("\r\n"); //x
   }
 
-  printString("huhi\r\n");
+  // printString("huhi\r\n");
   exec("shell", 0x3000, &success, 0x00);
 }

@@ -9,6 +9,8 @@ int main() {
   char buf[SECTOR_ENTRY_LENGTH * SECTOR_SIZE], path[MAXIMUM_CMD_LEN];
   int res = 0;
 
+  char test[17];
+
   getParameter(&cwdIdx, cwdName, argv, &success);
 
   strncpy(path, argv[1], MAXIMUM_CMD_LEN);
@@ -17,7 +19,7 @@ int main() {
     // printString(path);
   } else {
     // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
-    readFile(buf, path, &res, cwdIdx); // buggy
+    readFile(&buf, path, &res, cwdIdx); // buggy
 
     if (res > 0) {
       printString(buf);

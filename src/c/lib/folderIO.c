@@ -29,11 +29,11 @@ void createFolder(char parentIndex, char* folderName) {
     printString("Folder name already taken\r\n");
     return;
   }
-  if (!parentExists) {
-    printString("Invalid parent directory\r\n");
-    printNumber(parentIndex);
-    return;
-  }
+  // if (!parentExists) {
+  //   printString("Invalid parent directory\r\n");
+  //   printNumber(parentIndex);
+  //   return;
+  // }
 
   // nyari entri kosong di sektor files yang kosong kosong
   entry = 0;
@@ -61,6 +61,4 @@ void createFolder(char parentIndex, char* folderName) {
   writeSector(dir, ROOT_SECTOR);
   writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
   writeSector(sec, SECTORS_SECTOR);
-
-
 }
