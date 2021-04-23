@@ -55,6 +55,12 @@ int main() {
     }    
   }
 
+  if (entry == 2 * SECTOR_SIZE) {
+    printString("File not found!\r\n");
+    printString("\r\n");
+    exec("shell", 0x3000, &success, 0x00);
+  }
+
   printString("CONTENTS OF COPIED FILE \r\n");
   printString(buf);
   printString("\r\n\n");
