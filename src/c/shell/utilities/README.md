@@ -4,4 +4,4 @@
 - cp: `cp <path/src> <path/dest>`
 - mv: `mv <path/src> <dest>`
 - rm: ` rm <file/folder>`
-- mkdir: ` `
+- mkdir: `mkdir <folder> `

@@ -9,7 +9,12 @@ void clear(char *buffer, int length) {
 
 void printString(char *string) {
   while (*string != '\0') {
-    interrupt(0x10, 0x0E00 + *string, 0, 0, 0);
+    if (*string == '\n') {
+      interrupt(0x10, 0x0E00 + '\r', 0, 0, 0);
+      interrupt(0x10, 0x0E00 + '\n', 0, 0, 0);
+    } else {
+      interrupt(0x10, 0x0E00 + *string, 0, 0, 0);
+    }
     string++;
   }
 }
