@@ -3,21 +3,19 @@
 
 // TODO: cek yang mau di-link file apa dir
 int main() {
+  int success;
+  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN], cwdIdx, cwdName[FILE_NAME_LENGTH];
   char resourcePath[MAXIMUM_CMD_LEN], destinationPath[MAXIMUM_CMD_LEN];
-  int success, cwdIdx;
-  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN];
   char buf[16 * SECTOR_SIZE], dir[2 * SECTOR_SIZE];
-  char cwdName[FILE_NAME_LENGTH];
   int res = 0;
 
   getParameter(&cwdIdx, cwdName, argv, &success);
-  strncpy(&resourcePath, &argv[1], MAXIMUM_CMD_LEN);
-  strncpy(&destinationPath, &argv[2], MAXIMUM_CMD_LEN);
+  strncpy(resourcePath, argv + MAXIMUM_CMD_LEN, MAXIMUM_CMD_LEN);
+  strncpy(destinationPath, argv + MAXIMUM_CMD_LEN, MAXIMUM_CMD_LEN);
 
-  interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
-  interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir+SECTOR_SIZE, ROOT_SECTOR+1);
 
-  // read file
   readFile(buf, resourcePath, &res, cwdIdx);
   if (res <= 0) {  // read error
     goto cp_error;

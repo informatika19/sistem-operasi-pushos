@@ -2,10 +2,12 @@
 #include "../../lib/lib.h"
 
 int main() {
-  char cwdIdx;
-  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN], cwdName[FILE_NAME_LENGTH];
+  // getParameter
+  int success;
+  char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN], cwdIdx, cwdName[FILE_NAME_LENGTH];
+
   char buf[SECTOR_ENTRY_LENGTH * SECTOR_SIZE], path[MAXIMUM_CMD_LEN];
-  int res = 0, success;
+  int res = 0;
 
   getParameter(&cwdIdx, cwdName, argv, &success);
 
