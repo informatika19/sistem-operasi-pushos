@@ -51,7 +51,6 @@ int main() {
     if (*(dir + i + 2) != 0) {  // sektor files penuh
       printString("Sectors are full\r\n");
       goto hardLink_error;
-      printString("\r\n");
       exec("shell", 0x3000, &success, 0x00);
       return;
     }
@@ -68,12 +67,12 @@ int main() {
     return;
   } else {
     goto hardLink_error;
-    printString("\r\n");
     exec("shell", 0x3000, &success, 0x00);
     return;
   }
 
 hardLink_error:
   printString("An error occured while making symbolic link\r\n");
+  printString("\r\n");
   return;
 }
