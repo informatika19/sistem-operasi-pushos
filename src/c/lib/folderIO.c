@@ -61,6 +61,4 @@ void createFolder(char parentIndex, char* folderName) {
   writeSector(dir, ROOT_SECTOR);
   writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
   writeSector(sec, SECTORS_SECTOR);
-
-
 }
