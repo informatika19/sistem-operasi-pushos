@@ -10,25 +10,17 @@ int main () {
   getParameter(&cwdIdx, cwdName, argv, &success);
 
   if (!success) {
-    printString("An error occured while reading file ");
-    printString(path);
+    printString("An error occured");
   } else {
     // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
-    strncpy(path, argv[1], MAXIMUM_CMD_LEN);
-    printString("giibbe\r\n"); //x
-    createFolder(argv[1], cwdIdx);
-    printString("\r\nrish\r\n"); //x
-    printNumber(res); //x
+    // strncpy(path, argv[1], MAXIMUM_CMD_LEN);
+    printString("start\r\n"); //x
+    createFolder(cwdIdx, argv[1]);
+    printString("\r\nend\r\n"); //x
+    // printNumber(res); //x
     printString("\r\n"); //x
-
-    if (res > 0) {
-      printString(buf);
-    } else {
-      printString("An error occured while reading file ");
-      printString(path);
-    }
   }
 
-  printString("\r\n");
+  printString("huhi\r\n");
   exec("shell", 0x3000, &success, 0x00);
 }

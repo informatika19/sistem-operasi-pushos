@@ -1,6 +1,7 @@
 #include "headers/folderIO.h"
-#include "../lib/lib.h"
-
+#include "headers/string.h"
+#include "headers/boolean.h"
+#include "headers/math.h"
 
 /*
 1. get parameter nama folder apa yg mau dihapus
@@ -18,22 +19,17 @@ void deleteFolder(char *path, char *parentIndex){
   int isFolderFound=0;
   char parent;
 
-  readSector(map, MAP_SECTOR);
   readSector(dir, ROOT_SECTOR);
   readSector(dir+SECTOR_TOTAL, ROOT_SECTOR+1);
-  readSector(sec, SECTORS_SECTOR);
 
-  //1
   getParameter(&cwdIdx, cwdName, argv, &success);
 
-  //2
   parent = getFileIndex(argv[1], cwdIdx, dir);
-  
-  //3
+
   i = 0;
   while (i < 2 * 512) {
     if (*(dir + i) == parent && *(dir + i + 2) != 0) {
-      if (*(dir + i + 1) == '\xFF'){
+      if (*(dir + i + 1) == 0xFF){
         isFolderFound = 1;
         break;
       }
@@ -52,124 +48,77 @@ void deleteFolder(char *path, char *parentIndex){
     }
 
     removeFile(argv[1], &res2, cwdIdx);
-    printString("Berhasil dihapus");
+    printString("Berhasil dihapus\r\n");
+    exec("shell", 0x3000, &success, 0x00);
+
   }
 
-  //4
   else if (isFolderFound == 1){
-    printString("Gagal menghapus folder");
-  } 
+    printString("Gagal menghapus folder\r\n");
+    exec("shell", 0x3000, &success, 0x00);
+  }
 }
-
-#include "headers/string.h"
-#include "headers/boolean.h"
-#include "headers/math.h"
 
 /*
 change this to work on folders
 */
-void createFolder(char *foldername, char parentIndex) {
-  int i, j, entry, fNameLen, isFile, flagS, secsNeeded, secIndex;
-  char mapBuffer[SECTOR_SIZE];
-  char dirBuffer[SECTOR_SIZE*2];
-  char secBuffer[SECTOR_SIZE];
-  char fName[FILE_NAME_LENGTH];
+void createFolder(char parentIndex, char* folderName) {
+  int i, j, entry, sectorNeeded, sectorFree = 0, sectorsToUse[16], entrySectors;
+  bool alreadyExists = false, parentExists = (parentIndex == '\xFF');
+  char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
+  char fileName[FILE_NAME_LENGTH], parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
 
-  // Membaca sectors
-  readSector(mapBuffer, MAP_SECTOR);
-  readSector(dirBuffer, ROOT_SECTOR);
-  readSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
-  readSector(secBuffer+SECTOR_SIZE, SECTORS_SECTOR);
+  readSector(map, MAP_SECTOR);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
+  readSector(sec, SECTORS_SECTOR);
 
-  // Mem-validasi path
-//   strncpy(&parentIdx, parentIndex, 1);
-//   if (isPathValid(path, &parentIdx, dirBuffer) == 0) {
-//     // printString("Path tidak valid");
-//     *sectors = -4;
-//     return;
-//   }
+  // ngecek file dengan yang sama di parent index yang sama udah ada atau
+  // belum
 
-//   findFName(path, &isFile, &fName);
-  fNameLen = strlen(foldername);
-
-  // Mengecek apakah file sudah ada atau belum
-  for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-    if (parentIndex == dirBuffer[FILE_ENTRY_LENGTH * entry]
-      && (strncmp(fName, dirBuffer[FILE_ENTRY_LENGTH * entry + 2], FILE_NAME_LENGTH) == 0)) {
-      printString("File dengan nama yang sama sudah ada");
-    //   *sectors = -1;
-      return;
-    }
+  i = 0;
+  while (i < 2 * SECTOR_SIZE && !alreadyExists) {
+    parentExists = !parentExists ? *(dir + i) == parentIndex : parentExists;
+    alreadyExists = *(dir + i) == parentIndex &&
+                    strncmp(dir + i + 2, fileName, FILE_NAME_LENGTH) == 0;
+    i += 0x10;
   }
-
-  // Mengecek ketersediaan entry
-  for (entry = 0; entry < FILE_ENTRY_TOTAL; entry++) {
-    if (dirBuffer[FILE_ENTRY_LENGTH * entry + 2] == 0x00) {
-      break;
-    }
+  if (alreadyExists) {
+    printString("Folder name already taken\r\n");
+    return;
   }
-
-  if (entry == FILE_ENTRY_TOTAL) {
-    printString("Directory penuh\r\n\0");
-    // *sectors = -2;
+  if (!parentExists) {
+    printString("Invalid parent directory\r\n");
+    printNumber(parentIndex);
     return;
   }
 
-  // Mencari jumlah sector yang diperlukan // not needed
-//   secsNeeded = 0;
-//   while (buffer[SECTOR_SIZE * secsNeeded] != 0x00) {
-//     secsNeeded++;
-//   }
-
-  // Mengecek apakah jumlah sector di map cukup untuk buffer // not needed
-//   if (getMapEmptySectorCount(mapBuffer) < secsNeeded) {
-//     // printString("Map sector yang kosong tidak mencukupi\r\n");
-//     *sectors = -3;
-//     return;
-//   }
-
-  // Membersihkan sector yang akan digunakan  // not needed
-  clear(dirBuffer[FILE_ENTRY_LENGTH * entry], FILE_ENTRY_LENGTH);
-
-  // Menyimpan parentIndex
-  dirBuffer[FILE_ENTRY_LENGTH * entry] = parentIndex;
-
-//   // Menyimpan flag S // is always true
-    // Jika file (bukan folder)
-  if (isFile == 1) {
+  // nyari entri kosong di sektor files yang kosong kosong
+  entry = 0;
+  for (; *(dir + entry + 2) && entry < 2 * SECTOR_SIZE; entry += 0x10);
+  if (entry >= 2 * SECTOR_SIZE) {
+    printString("Directory space full\r\n");
     return;
   }
 
-//   flagS = getSectorsEmptyEntry(secBuffer); // not needed
-//   if (flagS == -1) {
-//     // printString("File penuh\r\n\0");
-//     *sectors = -3;
-//     return;
-//   }
-  
-  dirBuffer[FILE_ENTRY_LENGTH * entry + 1] = 0xFF;
+  // akusisi entry yang ditemukan sebelumnya
+  *(dir + entry) = parentIndex;
+  *(dir + entry + 1) = 0xFF;
+  strncpy(dir + entry + 2, folderName, FILE_NAME_LENGTH);
 
-  // Menyimpan nama file pada dir, nama harus kurang dari sama dengan 14
-  if (fNameLen < FILE_NAME_LENGTH-1) {
-    strncpy(dirBuffer[FILE_ENTRY_LENGTH * entry + 2], fName, fNameLen);
-    // dirBuffer[FILE_ENTRY_LENGTH * entry + 2 + fNameLen] = '\0';
-  }
+  printString("Created folder with name ");
+  printString(folderName);
+  printString(" with parent directory idx ");
+  printNumber(parentIndex);
+  printString(" with directory idx ");
+  printNumber(entry);
 
-//   // Menulis sector
-//   for (i = 0; i < secsNeeded; i++) {
-//     // Mencari sector kosong 
-//     secIndex = 0;
-//     while (mapBuffer[secIndex] != 0x0 && secIndex < 256) { secIndex++; } // 256 = half of sector size
-//     mapBuffer[secIndex] = 0xFF;
 
-//     secBuffer[flagS * SECTOR_ENTRY_LENGTH + i] = secIndex;
-//     writeSector(buffer+(i * SECTOR_SIZE), secIndex);
-//   }
+  // tulis perubahan
+  writeSector(map, MAP_SECTOR);
+  writeSector(dir, ROOT_SECTOR);
+  writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
+  writeSector(sec, SECTORS_SECTOR);
 
-//   *sectors = flagS;
 
-  writeSector(mapBuffer, MAP_SECTOR);
-  writeSector(dirBuffer, ROOT_SECTOR);
-  writeSector(dirBuffer+SECTOR_SIZE, ROOT_SECTOR+1);
-  writeSector(secBuffer, SECTORS_SECTOR);
 }

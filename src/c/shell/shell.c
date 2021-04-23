@@ -112,8 +112,8 @@ int main() {
           break;
         case 9: // rm
           setParameter(cwdIdx, cwdName, argv, &success);
-          if (argc != 3 || !success) {
-            printString("Usage: cp <path/src> <path/dest>\r\n");
+          if (argc != 2 || !success) {
+            printString("Usage: rm <path/src> <path/dest>\r\n");
           } else {
             exec("rm", 0x3001, &success, 0x00);
           }
@@ -276,10 +276,4 @@ void shell_ls(char parentIndex, char* folder) {
       }
     }
   }
-}
-
-void shell_mkdir(char cwdIdx, char* fName)
-{
-  createFolder(cwdIdx, fName);
-  return;
 }
