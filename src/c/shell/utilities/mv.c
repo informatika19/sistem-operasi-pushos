@@ -27,11 +27,6 @@ int main() {
     return;
   }
 
-  printNumber(parentIndexSrc);
-  printString("\r\n");
-  printNumber(parentIndexDest);
-  printString("\r\n");
-
   if (*(dir + parentIndexDest * FILE_ENTRY_LENGTH + 1) != 0xFF) {
     printString("Destination is a file\r\n");
     goto exec_shell;

@@ -13,8 +13,8 @@ int main() {
 
   strncpy(path, argv[1], MAXIMUM_CMD_LEN);
   if (!success) {
-    printString("An error occured while reading file ");
-    printString(path);
+    printString("An error occured while reading temp ");
+    // printString(path);
   } else {
     // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
     readFile(buf, path, &res, cwdIdx); // buggy

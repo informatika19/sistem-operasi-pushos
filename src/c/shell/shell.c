@@ -105,7 +105,7 @@ int main() {
         case 8: // mv
           setParameter(cwdIdx, cwdName, argv, &success);
           if (argc != 3 || !success) {
-            printString("Usage: mv <path/src> <path/dest>\r\n");
+            printString("Usage: mv <path/src> <dest>\r\n");
           } else {
             exec("mv", 0x3001, &success, 0x00);
           }
@@ -130,6 +130,7 @@ int main() {
     }
 
     // HISTORY
+    // benerin :3
     histc = (histc >= HIST_SIZE) ? 0 : histc;
     for (i = 1; i < HIST_SIZE; i++) {
       strcpy(hist[i - 1], hist[i]);
