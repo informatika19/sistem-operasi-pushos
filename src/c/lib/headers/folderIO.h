@@ -20,6 +20,5 @@
 
 // need to protect bin
 void createFolder(char parentIndex, char* folderName, char secFlag);
-void deleteFolder();
-
+void deleteFolder(char *path, char *parentIndex);
 #endif
