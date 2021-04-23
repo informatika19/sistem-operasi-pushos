@@ -8,6 +8,7 @@ LIB_C_DIR=$(C_DIR)/lib
 SHELL_C_DIR=$(C_DIR)/shell
 SHELL_C_APP_DIR=$(SHELL_C_DIR)/utilities
 TOOLS_DIR=tools
+EXT_APP_DIR=$(C_DIR)/program
 BIN=bin
 
 KSIZE=16
@@ -33,6 +34,10 @@ LIB_C_OUT=$(patsubst %, $(OUT_DIR)/lib_%.o, $(LIB_C))
 SHELL_C_APP=cat mv cp mkdir rm ln logo
 SHELL_C_APP_OUT=$(patsubst %, $(OUT_DIR)/shell_%.o, $(SHELL_C_APP))
 
+GACHA_C=$(EXT_APP_DIR)/gacha.c
+GACHA_OUT=$(OUT_DIR)/gacha.o
+GACHA=gacha
+
 BOOTLOADER=$(OUT_DIR)/bootloader
 BOOTLOADER_ASM=$(ASM_DIR)/bootloader.asm
 
@@ -46,6 +51,13 @@ $(OUT_DIR):
 
 $(BIN):
 	mkdir $(BIN)
+
+$(GACHA_OUT): $(GACHA_C)
+	bcc -ansi -c -o $@ $<
+
+$(GACHA): $(GACHA_OUT) $(OUT_DIR)/lib_math.o $(OUT_DIR)/lib_string.o $(OUT_DIR)/lib_fileIO.o $(LIB_ASM_OUT)
+	ld86 -o $@ -d $^
+	python3 tools/loadfile/loadfile.py out/system.img $@
 
 $(OUT_DIR)/lib_%.o: $(LIB_C_DIR)/%.c
 	bcc -ansi -c -o $@ $<
@@ -108,7 +120,7 @@ $(LANG):
 
 loadshell: $(BIN) $(OUT_DIR) $(SHELLL) $(SHELL_C_APP_OUT) $(SHELL_C_APP)
 
-build: $(LANG) $(SYS_IMG) loadshell
+build: $(LANG) $(SYS_IMG) loadshell $(GACHA)
 
 run: build
 	$(BOCHS) -f if2230.config
