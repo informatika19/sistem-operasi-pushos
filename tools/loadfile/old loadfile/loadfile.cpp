@@ -39,6 +39,7 @@ int main(int argc, char** argv)
     } else if (argc == 5)
     {
         system.addFolder(FOLDER_NAME, FOLDER_PATH);
+
     } else // loadfile <system.img> <file / -f> <path>
     { 
         string s(INPUT_NAME);
@@ -50,4 +51,3 @@ int main(int argc, char** argv)
         }
     }
 }
-
