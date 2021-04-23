@@ -30,52 +30,37 @@ int main() {
   entry = 0;
   for (; entry < 2 * SECTOR_SIZE; entry += 0x10) {
     strncpy(temp, dir + entry + 2, FILE_NAME_LENGTH);
-    if (strcmp(argv[1], temp) == 0)
-    {
+    if (strcmp(argv[1], temp) == 0) {
       secFlag = *(dir + entry + 1);
       break;
     } 
   }
 
+  if (entry == 2 * SECTOR_SIZE) {
+    printString("File not found!\r\n");
+    printString("\r\n");
+    exec("shell", 0x3000, &success, 0x00);
+  }
+
   // get list of sectors in map
   secStart = (secFlag * 0x10);
   strncpy(sectorBuff, sec + secStart, SECTOR_ENTRY_LENGTH);
+
+  if (sec == 0xFF) {
+    printString("Not a file!\r\n");
+    printString("\r\n");
+    exec("shell", 0x3000, &success, 0x00);
+  }
   
   i = 0;
-  for(; i < SECTOR_ENTRY_LENGTH; i++)
-  {
-    if (sectorBuff[i] != 0x00)
-    {
+  for(; i < SECTOR_ENTRY_LENGTH; i++) {
+    if (sectorBuff[i] != 0x00) {
       readSector(printbuff, sectorBuff[i]);
       printString(printbuff);
     }    
   }
 
-  // printString(cwdName);
-  // printString("\r\n");
-  // printString(argv[1]);
-
-  // readSector(test, 0x58);
-  // printString(test);
-
-  // strncpy(path, argv[1], MAXIMUM_CMD_LEN);
-  // if (!success) {
-  //   printString("An error occured while reading file! ");
-  //   printString(path);
-  // } else {
-  //   // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
-  //   readFile(&buf, path, &res, cwdIdx); // buggy
-
-  //   if (res > 0) {
-  //     printString(buf);
-  //   } else {
-  //     printString(buf);
-  //     printString("An error occured while reading file ");
-  //     printString(path);
-  //   }
-  // }
-
-  printString("\r\n");
-  printString("\r\n");
+  printString("\n");
+  printString("\n");
   exec("shell", 0x3000, &success, 0x00);
 }

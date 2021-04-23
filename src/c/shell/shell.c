@@ -234,7 +234,6 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
       printString(" not found.");
     }
   }
-  printString("\r\n");
   return;
 }
 
