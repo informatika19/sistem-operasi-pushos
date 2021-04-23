@@ -13,10 +13,17 @@ int main() {
 
   getParameter(&cwdIdx, cwdName, argv, &success);
 
+  // printString(cwdName);
+  // printString("\r\n");
+  // printString(argv[1]);
+
+  // readSector(test, 0x58);
+  // printString(test);
+
   strncpy(path, argv[1], MAXIMUM_CMD_LEN);
   if (!success) {
-    printString("An error occured while reading temp ");
-    // printString(path);
+    printString("An error occured while reading file! ");
+    printString(path);
   } else {
     // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
     readFile(&buf, path, &res, cwdIdx); // buggy
@@ -24,6 +31,7 @@ int main() {
     if (res > 0) {
       printString(buf);
     } else {
+      printString(buf);
       printString("An error occured while reading file ");
       printString(path);
     }
