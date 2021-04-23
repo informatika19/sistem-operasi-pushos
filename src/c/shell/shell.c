@@ -110,6 +110,11 @@ int main() {
           break;
         case 10: // mkdir
           setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 2 || !success) {
+            printString("Usage: mkdir <foldername>\r\n");
+          } else {
+            exec("mkdir", 0x3001, &success, 0x00);
+          }
           break;
         case 11: // local program
           setParameter(cwdIdx, cwdName, argv, &success);
