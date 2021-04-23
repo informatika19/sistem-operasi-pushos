@@ -12,13 +12,7 @@ int main () {
   if (!success) {
     printString("An error occured");
   } else {
-    // clear(buf, SECTOR_ENTRY_LENGTH * SECTOR_SIZE); // too big
-    // strncpy(path, argv[1], MAXIMUM_CMD_LEN);
-    // printString("start\r\n"); //x
-    createFolder(cwdIdx, argv[1]);
-    // printString("\r\nend\r\n"); //x
-    // printNumber(res); //x
-    // printString("\r\n"); //x
+    createFolder(cwdIdx, argv[1], 0xFF);
   }
 
   // printString("huhi\r\n");

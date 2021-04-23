@@ -4,7 +4,7 @@
 #include "headers/boolean.h"
 #include "headers/math.h"
 
-void createFolder(char parentIndex, char* folderName) {
+void createFolder(char parentIndex, char* folderName, char secFlag) {
   int i, j, entry, sectorNeeded, sectorFree = 0, sectorsToUse[16], entrySectors;
   bool alreadyExists = false, parentExists = (parentIndex == '\xFF');
   char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
@@ -45,7 +45,7 @@ void createFolder(char parentIndex, char* folderName) {
 
   // akusisi entry yang ditemukan sebelumnya
   *(dir + entry) = parentIndex;
-  *(dir + entry + 1) = 0xFF;
+  *(dir + entry + 1) = secFlag;
   strncpy(dir + entry + 2, folderName, FILE_NAME_LENGTH);
 
   printString("Created folder with name ");
@@ -61,4 +61,6 @@ void createFolder(char parentIndex, char* folderName) {
   writeSector(dir, ROOT_SECTOR);
   writeSector(dir + SECTOR_SIZE, ROOT_SECTOR+1);
   writeSector(sec, SECTORS_SECTOR);
+
+  printString("\r\n");
 }
