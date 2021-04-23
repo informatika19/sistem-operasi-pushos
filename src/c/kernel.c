@@ -1,24 +1,16 @@
 #include "kernel.h"
-
-#include "lib/lib.h"
-#include "shell/shell.h"
+#include "io.h"
+#include "filesystem.h"
 
 int main() {
-  char buffer[SECTOR_SIZE];
+  char buffer[512];
+  char *success;
 
   makeInterrupt21();
 
-  interrupt(0x10, 0x0013, 0, 0, 0); // set video mode
-  printLogoGrafik();
-  interrupt(0x15, 0x8600, 0, 4, 0); // sleep
-  interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
-  printLogoASCII();
-  printString("press enter to continue...");
-  readString(0);
-  interrupt(0x10, 0x0003, 0, 0, 0);
-  shell();
+  executeProgram("logo", 0x3000, &success, 0x00); // segmennya dukun anjay
 
-  while (true);
+  while (1);
 }
 
 void handleInterrupt21(int AX, int BX, int CX, int DX) {
@@ -62,18 +54,11 @@ void executeProgram(char *filename, int segment, int *success, char parentIndex)
   if (isSuccess) {
     // launchProgram
     int i = 0;
-    for (i = 0; i < 512*16; i++) {
+    for (i = 0; i < 512 * 16; i++) {
       putInMemory(segment, i, fileBuffer[i]);
     }
     launchProgram(segment);
   } else {
     interrupt(0x21, 0, "File not found!", 0,0);
-  }
-}
-
-void clear(char *buffer, int length) {
-  int i;
-  for (; i < length; i++) {
-    buffer[i] = 0;
   }
 }

@@ -10,7 +10,10 @@ char *strcat(char *dest, char *src);
 char *strncat(char *dest, char *src, int n);
 
 void printString(char *string);
-void printNumber(int number);
 void readString(char *string);
+void printNumber(int number);
+
+void int2str (char *string, int number);
+int str2int (char *string);
 
 #endif

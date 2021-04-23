@@ -5,8 +5,6 @@
 #define FILE_ENTRY_LENGTH   16
 #define FILE_ENTRY_TOTAL    64
 
-#define KERNEL_SIZE         16
-
 #define SECTOR_SIZE         512
 #define SECTOR_ENTRY_LENGTH 16
 #define SECTOR_FILE_TOTAL   32
@@ -16,25 +14,26 @@
 #define ROOT_SECTOR         0x101
 #define SECTORS_SECTOR      0x103
 
-#define MAX_CD              32
-
-#include "string.h"
+#define MAXIMUM_CMD_LEN     20
+#define MAXIMUM_ARGC        10
 
 void readSector(char *buffer, int sector);
 void writeSector(char *buffer, int sector);
+void clearSector(int sector);
+void clear(char *buffer, int length);
 
 void readFile(char *buffer, char *path, int *result, char parentIndex);
-void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
-
-void parsePath(char *path, char *parsedPath[]);
-int isPathValid(char *path, char *parentIndex, char *dirBuffer);
-int getFileIdx(char *name, char parentIndex,char *dirBuffer);
-void findFName(char *path, int *isFile, char *fName);
-int getMapEmptySectorCount(char *mapBuffer);
-int getSectorsEmptyEntry(char *secBuffer);
-char* getFileFromIdx(char idx, char *files);
+void writeFile(char *buffer, char *path, int *sections, char parentIndex);
+void removeFile(char *path, int *result, char parentIndex);
 
 int getFileIndex(char *path, char parentIndex, char *dir);
-int parsePath1(char *path, char *parents, char *fname);
+int parsePath(char *path, char *parents, char *fname);
+
+void setParameter(char parentIndex, char *cwdName, char *argv, int *success);
+void getParameter(char *parentIndex, char *cwdName, char *argv, int *success);
+
+int getSectorsNeeded(char *argv);
+
+void exec(char *path, int segment, int *success, int parentIndex);
 
 #endif

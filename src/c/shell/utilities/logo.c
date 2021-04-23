@@ -1,4 +1,19 @@
 #include "headers/logo.h"
+#include "../../lib/lib.h"
+
+int main() {
+  int success;
+  interrupt(0x10, 0x0013, 0, 0, 0); // set video mode
+  printLogoGrafik();
+  interrupt(0x15, 0x8600, 0, 4, 0); // sleep
+  interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
+  printLogoASCII();
+  printString("press enter to continue...");
+  readString(0);
+  printString("\r\n");
+  interrupt(0x10, 0x0003, 0, 0, 0); // set video mode
+  exec("shell", 0x3000, &success, 0x00);
+}
 
 void printLogoGrafik() {
   lineLogo("           `...........`   `...`      ...`   `.....``  `..`     `..`           ",0);

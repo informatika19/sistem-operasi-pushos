@@ -1,99 +1,146 @@
 #include "shell.h"
 
-#include "../lib/lib.h"
-#include "../kernel.h"
-#include "utilities/headers/cat.h"
-#include "utilities/headers/cp.h"
-#include "utilities/headers/ln.h"
-#include "utilities/headers/mkdir.h"
-#include "utilities/headers/mv.h"
-#include "utilities/headers/rm.h"
+#include "../lib/headers/boolean.h"
+#include "../lib/headers/string.h"
+#include "../lib/headers/fileIO.h"
+#include "../lib/headers/math.h"
 
-int shell() {
-  char command[10 * MAXIMUM_CMD_LEN];  // kalo pointer aja takut error
-  char argv[10][MAXIMUM_CMD_LEN];
+int main() {
+  char command[10 * 20];
+  char argv[10][20];
+  char hist[HIST_SIZE][10 * 20];
+  char username[7], cwdName[14], cwdIdx;
+  char program[18];
+  int argc, histc = 0, i, cmd, success;
 
-  char hist[HIST_SIZE][10 * MAXIMUM_CMD_LEN];
+  cwdIdx = 0xFF;
 
-  char username[11], cwdName[14], promptHead[3], prompt[27], atSymb[2];
-  char cwdIdx = 0xFF;
+  clear(argv, 200);
+  clear(hist, HIST_SIZE * 200);
+  clear(username, 7);
+  clear(cwdName, 14);
 
-  int argc, histc = 0, i;
-
-  strncpy(username, "pushOS", 6);
-  atSymb[0] = '@';
-  atSymb[1] = 0;
+  strncpy(username, "pushOS", 7);
   cwdName[0] = '/';
   cwdName[1] = 0;
-  promptHead[0] = '>';
-  promptHead[1] = ' ';
-  promptHead[2] = 0;  // default prompt: "pushOS@/> "
 
   while (true) {
-    // set prompt
-    clear(prompt, 27);
-    strncat(prompt, username, strlen(username));
-    strncat(prompt, atSymb, 1);
-    strncat(prompt, cwdName, strlen(cwdName));
-    strncat(prompt, promptHead, 2);
-    interrupt(0x21, 0, prompt, 0, 0);
+    success = 0;
+    getParameter(&cwdIdx, cwdName, argv, &success);
 
-    interrupt(0x21, 1, command, 0, 0);
+    removeFile("temp", &success, 0x00);
 
+    printString(username);
+    printString("@");
+    printString(cwdName);
+    printString("> ");
+    
+    clear(command, 200);
+    clear(argv, 10 * 20);
+
+    readString(command);
     // parse dan hasil parse
     argc = commandParser(command, argv);
-    if (argc < 0) {
-      // TODO: bad UX because doesn't tell the error
-      // interrupt(0x21, 0, "Terjadi kesalahan saat membaca perintah\r\n", 0, 0);
-      continue;
-    }
 
-    // eksekusi perintah
-    if (strncmp("cd", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 2) {
-        interrupt(0x21, 0, "Penggunaan: cd <path/direktori>\r\n", 0, 0);
-      } else {
-        shell_cd(&cwdIdx, argv[1], cwdName);
-      }
-    } else if (strncmp("ls", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      shell_ls(cwdIdx);
-    } else if (strncmp("cat", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 2) {
-        interrupt(0x21, 0, "Penggunaan: cat <path/file>\r\n", 0, 0);
-      } else {
-        shell_cat(cwdIdx, argv[1]);
-      }
-    } else if (strncmp("ln", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 3) {
-        interrupt(0x21, 0, "Penggunaan: ln <path/sumber> <path/tujuan>\r\n", 0, 0);
-      } else {
-        shell_hardLink(cwdIdx, argv[1], argv[2]);
-      }
-    } else if (strncmp("cwd", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      printNumber(cwdIdx);
-      printString(" - ");
-      printString(cwdName);
-      printString("\r\n");
-    } else if (strncmp("history", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      for (i = 0; i < HIST_SIZE; i++) {
-        if (strlen(hist[i]) != 0) {
-          printString(hist[i]);
-          printString("\r\n");
-        }
-      }
-    } else if (strncmp("cp", argv[0], MAXIMUM_CMD_LEN) == 0) {
-      if (argc != 3) {
-        interrupt(0x21, 0, "Penggunaan: cp <path/sumber> <path/tujuan>\r\n", 0, 0);
-      } else {
-        shell_cp(cwdIdx, argv[1], argv[2]);
-      }
+    printString("\r\n");
+    if (argc < 0) {
+      continue;
     } else {
-      interrupt(0x21, 0, "Perintah ", 0, 0);
-      interrupt(0x21, 0, argv[0], 0, 0);
-      interrupt(0x21, 0, " tidak dikenali.\r\n", 0, 0);
+      cmd = cmdcmp(argv[0]);
+      switch(cmd) {
+        case 1: // cd
+          if (argc != 2) {
+            printString("Usage: cd <path/directory>\r\n");
+          } else {
+            shell_cd(&cwdIdx, argv[1], cwdName);
+          }
+          break;
+        case 2: // ls
+          if (argc == 2) {
+            shell_ls(cwdIdx, argv[1]);
+          } else if (argc == 1) {
+            shell_ls(cwdIdx, 0);
+          } else {
+            printString("Usage: ls <path/directory> or ls");
+          }
+          break;
+        case 5: // cwd
+          printNumber(cwdIdx);
+          printString(" - ");
+          printString(cwdName);
+          printString("\r\n");
+          break;
+        case 6: // history
+          for (i = 0; i < HIST_SIZE; i++) {
+            if (strlen(hist[i]) != 0) {
+              printString(hist[i]);
+              printString("\r\n");
+            }
+          }
+          break;
+        case 3: // cat
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 2 || !success) {
+            printString("Usage: cat <path/file>\r\n");
+          } else {
+            exec("cat", 0x3001, &success, 0x00);
+          }
+          break;
+        case 4: // ln
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 3 || !success) {
+            printString("Usage: ln <path/src> <path/dest>\r\n");
+          } else {
+            exec("ln", 0x3001, &success, 0x00);
+          }
+          break;
+        case 7: // cp
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 3 || !success) {
+            printString("Usage: cp <path/src> <path/dest>\r\n");
+          } else {
+            exec("cp", 0x3001, &success, 0x00);
+          }
+          break;
+        case 8: // mv
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 3 || !success) {
+            printString("Usage: mv <path/src> <dest>\r\n");
+          } else {
+            exec("mv", 0x3001, &success, 0x00);
+          }
+          break;
+        case 9: // rm
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 2 || !success) {
+            printString("Usage: rm <file/folder>\r\n");
+          } else {
+            exec("rm", 0x3001, &success, 0x00);
+          }
+          break;
+        case 10: // mkdir
+          setParameter(cwdIdx, cwdName, argv, &success);
+          if (argc != 2 || !success) {
+            printString("Usage: mkdir <foldername>\r\n");
+          } else {
+            exec("mkdir", 0x3001, &success, 0x00);
+          }
+          break;
+        case 11: // local program
+          setParameter(cwdIdx, cwdName, argv, &success);
+          strncpy(program, argv + 2, MAXIMUM_CMD_LEN-2);
+          exec(program, 0x3001, &success, cwdIdx);
+          break;
+        default: // -1
+          printString("Unknown command ");
+          printString(argv[0]);
+          printString("\r\n");
+      }
+      printString("\r\n");
     }
 
     // HISTORY
+    // benerin :3
     histc = (histc >= HIST_SIZE) ? 0 : histc;
     for (i = 1; i < HIST_SIZE; i++) {
       strcpy(hist[i - 1], hist[i]);
@@ -104,18 +151,34 @@ int shell() {
   }
 }
 
+int cmdcmp(char *argv) {
+  if (strncmp("cd", argv, 20) == 0) return 1;
+  if (strncmp("ls", argv, 20) == 0) return 2;
+  if (strncmp("cat", argv, 20) == 0) return 3;
+  if (strncmp("ln", argv, 20) == 0) return 4;
+  if (strncmp("cwd", argv, 20) == 0) return 5;
+  if (strncmp("history", argv, 20) == 0) return 6;
+  if (strncmp("cp", argv, 20) == 0) return 7;
+  if (strncmp("mv", argv, 20) == 0) return 8;
+  if (strncmp("rm", argv, 20) == 0) return 9;
+  if (strncmp("mkdir", argv, 20) == 0) return 10;
+  if (strncmp("./", argv, 2) == 0) return 11;
+  return -1;
+}
+
 int commandParser(char *cmd, char *argument) {
   int i, j;
   bool stop = false;
 
   i = 0, j = 0;
   for (; *cmd == ' '; cmd++);
+  stop = strcmp(cmd, "\0") == 0; // hanya enter
   while (*cmd != '\0' && !stop) {
-    stop = i >= MAXIMUM_CMD_LEN;
+    stop = i >= 20;
     switch (*cmd) {
       case ' ':
         *(argument + j + i) = 0;
-        j += MAXIMUM_CMD_LEN * (i != 0);
+        j += 20 * (i != 0);
         i = 0;
         break;
       case '\\':
@@ -132,18 +195,18 @@ int commandParser(char *cmd, char *argument) {
   }
 
   *(argument + j + i) = 0;
-  return stop ? -1 : (div(j, MAXIMUM_CMD_LEN) + 1);
+  return stop ? -1 : (div(j, 20) + 1);
 }
 
 void shell_cd(char *parentIndex, char *path, char *newCwdName) {
-  char dir[2 * SECTOR_SIZE];
+  char dir[2 * 512];
   int tmpPI = *parentIndex, test;
   bool found = false, isDir = true;
 
-  if (strncmp(path, ".", MAXIMUM_CMD_LEN)) {
-    if (strncmp(path, "/", MAXIMUM_CMD_LEN) != 0) {
-      interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
-      interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
+  if (strncmp(path, ".", 20)) {
+    if (strncmp(path, "/", 20) != 0) {
+      readSector(dir, ROOT_SECTOR);
+      readSector(dir+SECTOR_SIZE, ROOT_SECTOR+1);
 
       test = getFileIndex(path, *parentIndex, dir);
       tmpPI = test & 0xFF;
@@ -162,32 +225,61 @@ void shell_cd(char *parentIndex, char *path, char *newCwdName) {
           *parentIndex = tmpPI;
           strncpy(newCwdName, dir + (tmpPI * 0x10) + 2, 14);
       } else {
-          interrupt(0x21, 0, path, 0, 0);
-          interrupt(0x21, 0, " bukan direktori.\r\n", 0, 0);
+          printString(path);
+          printString(" is not a directory.");
       }
     } else {
-      interrupt(0x21, 0, "Direktori ", 0, 0);
-      interrupt(0x21, 0, path, 0, 0);
-      interrupt(0x21, 0, " tidak ditemukan.\r\n", 0, 0);
+      printString("Directory ");
+      printString(path);
+      printString(" not found.");
     }
   }
   return;
 }
 
-// TODO: ls ke directory lain
-void shell_ls(char parentIndex) {
-  int i = 0;
-  char dir[2 * SECTOR_SIZE];
+void shell_ls(char parentIndex, char* folder) {
+  int i, j;
+  bool found = false;
+  char dir[2 * 512];
 
-  interrupt(0x21, 0x0002, dir, ROOT_SECTOR, 0);  // readSector
-  interrupt(0x21, 0x0002, dir + SECTOR_SIZE, ROOT_SECTOR+1, 0);
+  readSector(dir, ROOT_SECTOR);
+  readSector(dir+SECTOR_SIZE, ROOT_SECTOR+1);
 
-  while (i < 2 * SECTOR_SIZE) {
-    if (*(dir + i) == parentIndex && *(dir + i + 2) != 0) {
-        interrupt(0x21, 0, dir + i + 2, 0, 0);
-        if (*(dir + i + 1) == '\xFF') interrupt(0x21, 0, "/", 0, 0);
-        interrupt(0x21, 0, "\r\n", 0, 0);
+  if (folder == 0) {
+    i = 0;
+    while (i < 2 * 512) {
+      if (*(dir + i) == parentIndex && *(dir + i + 2) != 0) {
+        printString(dir + i + 2);
+        if (*(dir + i + 1) == '\xFF') printString("/");
+        printString("\r\n");
+      }
+      i += 16;
     }
-    i += 16;
+  } else {
+    for (i = 0; i < 64; i++) {
+      if (*(dir + 16 * i) == parentIndex
+          && *(dir + 16 * i + 2) != 0
+          && *(dir + 16 * i + 1) == '\xFF'
+          && strncmp((dir + 16 * i + 2), folder, 14) == 0) { 
+        found = true;
+        j = i;
+        break;
+      }
+    }
+    if (!found) {
+      printString("There is no folder named ");
+      printString(folder);
+      printString(" in this directory");
+      return;
+    } else {
+      while (i < 2 * 512) {
+      if (*(dir + i) == j && *(dir + i + 2) != 0) {
+          printString(dir + i + 2);
+          if (*(dir + i + 1) == '\xFF') printString("/");
+          printString("\r\n");
+        }
+      i += 16;
+      }
+    }
   }
 }
