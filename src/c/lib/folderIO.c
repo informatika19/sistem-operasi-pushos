@@ -48,12 +48,12 @@ void createFolder(char parentIndex, char* folderName, char secFlag) {
   *(dir + entry + 1) = secFlag;
   strncpy(dir + entry + 2, folderName, FILE_NAME_LENGTH);
 
-  printString("Created folder with name ");
-  printString(folderName);
-  printString(" with parent directory idx ");
-  printNumber(parentIndex);
-  printString(" with directory idx ");
-  printNumber(entry);
+  // printString("Created folder with name ");
+  // printString(folderName);
+  // printString(" with parent directory idx ");
+  // printNumber(parentIndex);
+  // printString(" with directory idx ");
+  // printNumber(entry);
 
 
   // tulis perubahan
