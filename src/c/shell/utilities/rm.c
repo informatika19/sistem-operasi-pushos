@@ -18,18 +18,21 @@ int main () {
 
   idx = getFileIndex(argv[1], cwdIdx, dir);
 
-  if (idx != -1){
-    if (*(dir + 16*idx + 1) == 0xFF){
+  if (idx != -1) {
+    if (*(dir + 16*idx + 1) == 0xFF) {
       deleteFolder(argv[1], cwdIdx);
-    }
-    else{
-      printString("Berhasil menghapus file \r\n");
+    } else {
       removeFile(argv[1], &res ,cwdIdx);
+      printString("Successfully removed file ");
+      printString(argv[1]);
+      printString("\r\n");
+      printString("\r\n");
     }
     exec("shell", 0x3000, &success, 0x00);
   }
   else{
-    printString("File/folder tidak ditemukan\r\n");
+    printString("File/Folder not found!\r\n");
+    printString("\r\n");
     exec("shell", 0x3000, &success, 0x00);
   }
 }

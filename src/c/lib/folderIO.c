@@ -9,8 +9,7 @@ void deleteFolder(char *path, char *parentIndex){
   char argv[MAXIMUM_ARGC][MAXIMUM_CMD_LEN], cwdName[FILE_NAME_LENGTH];
   char buf[SECTOR_ENTRY_LENGTH * SECTOR_SIZE], path[MAXIMUM_CMD_LEN];
   char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
-  int res = 0, success, i, res2;
-  int isFolderFound=0;
+  int res = 0, success, i, res2, isFolderFound = 0;
   char parent;
 
   readSector(dir, ROOT_SECTOR);
@@ -23,7 +22,7 @@ void deleteFolder(char *path, char *parentIndex){
   i = 0;
   while (i < 2 * 512) {
     if (*(dir + i) == parent && *(dir + i + 2) != 0) {
-      if (*(dir + i + 1) == 0xFF){
+      if (*(dir + i + 1) == 0xFF) {
         isFolderFound = 1;
         break;
       }
@@ -31,24 +30,26 @@ void deleteFolder(char *path, char *parentIndex){
     i += 16;
   }
 
-  if (isFolderFound == 0){
+  if (isFolderFound == 0) {
     i = 0;
     while (i < 2 * 512) {
       if (*(dir + i) == parent && *(dir + i + 2) != 0) {
-        int res;
         removeFile(dir + i + 2, &res, parent);
       }
       i += 16;
     }
 
     removeFile(argv[1], &res2, cwdIdx);
-    printString("Berhasil menghapus folder\r\n");
+    printString("Successfully removed folder ");
+    printString(argv[1]);
+    printString("\r\n");
+    printString("\r\n");
     exec("shell", 0x3000, &success, 0x00);
-
   }
 
-  else if (isFolderFound == 1){
-    printString("Gagal menghapus folder karena terdapat folder di dalam folder\r\n");
+  else if (isFolderFound == 1) {
+    printString("Failed to remove folder because the folder have subfolder(s)\r\n");
+    printString("\r\n");
     exec("shell", 0x3000, &success, 0x00);
   }
 }
@@ -66,7 +67,6 @@ void createFolder(char parentIndex, char* folderName, char secFlag) {
 
   // ngecek file dengan yang sama di parent index yang sama udah ada atau
   // belum
-
   i = 0;
   while (i < 2 * SECTOR_SIZE && !alreadyExists) {
     parentExists = !parentExists ? *(dir + i) == parentIndex : parentExists;
@@ -103,7 +103,6 @@ void createFolder(char parentIndex, char* folderName, char secFlag) {
   // printNumber(parentIndex);
   // printString(" with directory idx ");
   // printNumber(entry);
-
 
   // tulis perubahan
   writeSector(map, MAP_SECTOR);

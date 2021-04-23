@@ -17,8 +17,8 @@
 #define MAXIMUM_CMD_LEN     20
 #define MAXIMUM_ARGC        10
 
-
 // need to protect bin
 void createFolder(char parentIndex, char* folderName, char secFlag);
 void deleteFolder(char *path, char *parentIndex);
+
 #endif
