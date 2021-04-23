@@ -16,13 +16,17 @@ void writeSector(char *buffer, int sector) {
  */
 void clearSector(int sector) {
   char buffer[SECTOR_SIZE];
+  int i;
   clear(buffer, SECTOR_SIZE);
-  interrupt(0x21, 0x0003, buffer, sector, 0); // writeSector
+  for (i = 0; i < SECTOR_SIZE; i++) {
+    *(buffer + i) = 0;
+  }
+  writeSector(buffer, sector);
 }
 
 void clear(char *buffer, int length) {
   int i;
-  for (; i < length; i++) {
+  for (i = 0; i < length; i++) {
     *(buffer + i) = 0;
   }
 }
@@ -41,7 +45,8 @@ void writeFile(char *buffer, char *path, int *sections, char parentIndex) {
  * -2 path tidak valid
  */
 void removeFile(char *path, int *result, char parentIndex) {
-  int i, j, sectorsUsed[16], s;
+  int i, j, sectorsUsed[16]; char s;
+  // char temp;
   bool exists = false, parentExists = (parentIndex == '\xFF');
   char map[SECTOR_SIZE], dir[2 * SECTOR_SIZE], sec[SECTOR_SIZE];
   char fileName[FILE_NAME_LENGTH], parents[FILE_ENTRY_TOTAL][FILE_NAME_LENGTH];
@@ -73,10 +78,10 @@ void removeFile(char *path, int *result, char parentIndex) {
   i = 0;
   while (i < 2 * SECTOR_SIZE && !exists) {
     parentExists = !parentExists ? *(dir + i) == parentIndex : parentExists;
-    strncpy(s, (dir + i + 1), 1);
+    strncpy(&s, (dir + i + 1), 1);
     exists = *(dir + i) == parentIndex &&
                     strncmp(dir + i + 2, fileName, FILE_NAME_LENGTH) == 0;
-    i += 0x10;
+    i += FILE_ENTRY_LENGTH;
   }
   if (!exists) {
     *result = -1;
@@ -87,24 +92,33 @@ void removeFile(char *path, int *result, char parentIndex) {
     return;
   }
 
-  printNumber(s); //x
-  printString(" <<< s\r\n"); //x
+  // cari index sector yang di pake dari sektor sectors
+  strncpy(&sectorsUsed, sec + s * SECTOR_ENTRY_LENGTH, SECTOR_ENTRY_LENGTH); 
 
+  // balikin 0xFF ke 0x00 di map + buang isi sector yang dipake
   i = 0;
-  while (i < SECTOR_ENTRY_LENGTH && (sec + s * SECTOR_ENTRY_LENGTH + i) != 0) {
-    strncpy(sectorsUsed + i, sec + s * SECTOR_ENTRY_LENGTH + i, 1);
-    strncpy(sec + s * SECTOR_ENTRY_LENGTH + i, 0, 1);
-    i++;
-  }
-  
-  i = 0;
-  while (sectorsUsed + i != 0) {
-    strncpy(map + (*sectorsUsed + i), 0, 1);
-    clearSector(*sectorsUsed + i);
+  while (*(sectorsUsed + i) != 0) {
+    *(map + *(sectorsUsed + i)) = 0;
+    clearSector(*(sectorsUsed + i));
     i++;
   }
 
-  *result = i;
+  // bersihin isi sektor sector entry ke-s
+  clear((sec + s * SECTOR_ENTRY_LENGTH), SECTOR_ENTRY_LENGTH);
+
+  // bersihin entry di dir
+  i = 0;
+  while (i < FILE_ENTRY_TOTAL) {
+    if (*(dir + i * FILE_ENTRY_LENGTH) == parentIndex &&
+        *(dir + i * FILE_ENTRY_LENGTH + 1) == s &&
+        strncmp((dir + i * FILE_ENTRY_LENGTH + 2), fileName, FILE_NAME_LENGTH) == 0) {
+          clear((dir + i * FILE_ENTRY_LENGTH), FILE_ENTRY_LENGTH);
+          break;
+        }
+    i++;
+  }
+
+  *result = 1;
 
   writeSector(map, MAP_SECTOR);
   writeSector(dir, ROOT_SECTOR);
